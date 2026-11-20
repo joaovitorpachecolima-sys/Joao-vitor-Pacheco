@@ -1,0 +1,2982 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F3F5F7">
+<title>P3 de Circuitos CC</title>
+<!--
+  P3 de Circuitos CC: transitórios de 1ª e 2ª ordem (TEE00190, UFF).
+  Um arquivo só. O progresso fica no localStorage do navegador.
+  Dependências opcionais (CDN): fontes IBM Plex e KaTeX para as fórmulas.
+  Sem internet, tudo funciona; as fórmulas aparecem como texto LaTeX.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+  try { var s = JSON.parse(localStorage.getItem('p3-circuitos') || '{}'); } catch (e) { s = {}; }
+  document.documentElement.dataset.theme = s.tema || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+</script>
+<style>
+/* ============================================================
+   Cores com significado: azul = corrente, laranja = tensão.
+   Cada instante tem a sua cor: 0⁻ ardósia, 0⁺ âmbar, ∞ verde, τ roxo.
+   Os gráficos são telas de osciloscópio.
+   ============================================================ */
+:root {
+  --fundo: #F3F5F7;
+  --cartao: #FFFFFF;
+  --tinta: #111A22;
+  --tinta-2: #52606D;
+  --linha: #D2DAE1;
+  --linha-2: #E6EBEF;
+  --corrente: #1660D8;
+  --tensao: #CF4317;
+  --f-antes: #5E6E7D;
+  --f-inicial: #C98204;
+  --f-final: #10885A;
+  --f-tau: #7448D1;
+  --ok: #10885A;
+  --erro: #C8321E;
+  --tela: #0A1512;
+  --tela-grade: #14291F;
+  --tela-grade-forte: #1F4234;
+  --traco: #46EE9C;
+  --traco-2: #6CB4FF;
+  --tela-texto: #93C2AC;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+:root[data-theme=dark] {
+  --fundo: #0D1217;
+  --cartao: #151C23;
+  --tinta: #E3E9EE;
+  --tinta-2: #94A2AF;
+  --linha: #2A3540;
+  --linha-2: #1D2630;
+  --corrente: #6FA8FF;
+  --tensao: #FF8B5E;
+  --f-antes: #9AA8B6;
+  --f-inicial: #F2B13A;
+  --f-final: #35C98A;
+  --f-tau: #A88BFF;
+  --ok: #35C98A;
+  --erro: #FF7A66;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+body { margin: 0; background: var(--fundo); color: var(--tinta); font: 16px/1.6 var(--sans); }
+a { color: var(--corrente); text-underline-offset: 3px; }
+h1, h2, h3 { margin: 0; line-height: 1.15; font-weight: 600; letter-spacing: -.01em; }
+p { margin: 0 0 14px; }
+code, .mono { font-family: var(--mono); }
+:focus-visible { outline: 2.5px solid var(--corrente); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.katex { font-size: 1.06em; }
+
+button, .botao {
+  font: 600 15px/1.2 var(--sans); color: var(--tinta);
+  background: var(--cartao); border: 1.5px solid var(--linha); border-radius: 8px;
+  padding: 10px 15px; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; transition: border-color .12s, background .12s;
+}
+button:hover, .botao:hover { border-color: var(--tinta-2); }
+button.prim, .botao.prim { background: var(--tinta); border-color: var(--tinta); color: var(--cartao); }
+button.prim:hover, .botao.prim:hover { filter: brightness(1.15); }
+button.leve { border-color: transparent; background: transparent; color: var(--tinta-2); }
+button.leve:hover { color: var(--tinta); background: var(--linha-2); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+input[type=text] {
+  font: 500 16px/1.2 var(--mono); color: var(--tinta); background: var(--cartao);
+  border: 1.5px solid var(--linha); border-radius: 8px; padding: 10px 12px; min-height: 44px; width: 130px;
+}
+input[type=text]:focus { border-color: var(--corrente); outline: none; }
+input.certo { border-color: var(--ok); }
+input.errado { border-color: var(--erro); }
+
+/* ---------- topo ---------- */
+.topo { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--fundo) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--linha); }
+.topo-in { max-width: 1180px; margin: 0 auto; height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.marca { display: flex; align-items: center; gap: 10px; color: var(--tinta); text-decoration: none; font-weight: 700; font-size: 16px; }
+.marca svg { width: 30px; height: 30px; }
+.topo nav { display: flex; gap: 2px; align-items: center; }
+.topo nav a { color: var(--tinta-2); text-decoration: none; font-weight: 500; font-size: 15px; padding: 8px 11px; border-radius: 6px; }
+.topo nav a:hover { color: var(--tinta); background: var(--linha-2); }
+.topo nav a[aria-current=page] { color: var(--tinta); font-weight: 600; }
+.topo .tema { min-height: 40px; padding: 8px; border-color: transparent; background: transparent; }
+@media (max-width: 720px) { .topo nav .longo, .topo nav .so-largo { display: none; } .topo nav a { padding: 8px 6px; font-size: 14px; } .marca span { display: none; } .topo-in { padding: 0 12px; } }
+
+/* ---------- página ---------- */
+.pagina { max-width: 1180px; margin: 0 auto; padding: 40px 20px 100px; }
+.coluna { max-width: 760px; }
+.rotulo-fase { display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--mono); padding: 4px 8px; border-radius: 5px; color: #fff; }
+.rf-antes { background: var(--f-antes); } .rf-inicial { background: var(--f-inicial); } .rf-final { background: var(--f-final); } .rf-tau { background: var(--f-tau); }
+:root[data-theme=dark] .rotulo-fase { color: #0D1217; }
+
+/* início */
+.abertura { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 44px; align-items: center; }
+.abertura h1 { font-size: clamp(36px, 5vw, 58px); font-weight: 700; letter-spacing: -.03em; line-height: 1.02; margin-bottom: 18px; text-wrap: balance; }
+.abertura .lead { font-size: 18px; color: var(--tinta-2); max-width: 44ch; }
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 14px; }
+.progresso-geral { font-size: 14px; color: var(--tinta-2); }
+.progresso-geral b { color: var(--tinta); }
+.secao { margin-top: 72px; }
+.secao > h2 { font-size: 28px; margin-bottom: 8px; }
+.secao > p { color: var(--tinta-2); max-width: 64ch; }
+.tipos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+.tipo { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 20px; }
+.tipo h3 { font-size: 18px; margin-bottom: 6px; }
+.tipo p { color: var(--tinta-2); font-size: 15px; margin-bottom: 10px; }
+.tipo .freq { font: 600 13px/1 var(--mono); color: var(--tinta-2); margin-bottom: 12px; display: block; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips a { font-size: 13.5px; font-weight: 600; padding: 4px 10px; border: 1.5px solid var(--linha); border-radius: 99px; text-decoration: none; color: var(--tinta); }
+.chips a:hover { border-color: var(--corrente); color: var(--corrente); }
+.lista { margin-top: 20px; border-top: 1px solid var(--linha); }
+.item-lista { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 4px; border-bottom: 1px solid var(--linha); color: var(--tinta); text-decoration: none; }
+.item-lista:hover { background: var(--cartao); }
+.item-lista .num { font: 600 26px/1 var(--mono); color: var(--tinta-2); }
+.item-lista h3 { font-size: 18px; margin-bottom: 2px; }
+.item-lista p { margin: 0; color: var(--tinta-2); font-size: 15px; }
+.item-lista .estado { font: 500 13px/1.3 var(--mono); color: var(--tinta-2); text-align: right; white-space: nowrap; }
+.item-lista .estado.ok { color: var(--ok); }
+.atalhos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
+.atalho { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.atalho h3 { font-size: 20px; }
+.atalho p { color: var(--tinta-2); margin: 0 0 8px; }
+
+/* ---------- bancada (circuito + osciloscópio ao vivo) ---------- */
+.bancada { background: var(--cartao); border: 1px solid var(--linha); border-radius: 14px; overflow: hidden; }
+.bancada-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--linha); flex-wrap: wrap; }
+.bancada-topo .modos { display: flex; gap: 4px; }
+.bancada-topo .modos button { min-height: 36px; padding: 6px 12px; font-size: 14px; }
+.bancada-topo .modos button[aria-pressed=true] { background: var(--tinta); color: var(--cartao); border-color: var(--tinta); }
+.bancada-corpo { display: grid; grid-template-columns: minmax(0, 1fr); }
+.bancada .esquema { padding: 6px 10px 0; }
+.bancada .esquema svg { max-height: 230px; }
+.leituras { display: flex; gap: 18px; padding: 0 16px 10px; flex-wrap: wrap; font: 500 15px/1.3 var(--mono); }
+.leituras .lv { color: var(--tensao); } .leituras .li { color: var(--corrente); }
+.bancada .dica-chave { font-size: 14px; color: var(--tinta-2); padding: 0 16px 10px; }
+
+/* ---------- esquemas ---------- */
+.esquema { overflow-x: auto; }
+.esquema svg { width: 100%; height: auto; display: block; min-width: 520px; }
+.bancada .esquema svg { min-width: 0; }
+.esq-fio { stroke: var(--tinta); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.esq-el { stroke: var(--tinta); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.esq-no { fill: var(--tinta); }
+.esq-term { fill: var(--cartao); stroke: var(--tinta); stroke-width: 1.8; }
+.esq-txt { fill: var(--tinta-2); font: 500 14px var(--sans); }
+.esq-txt.forte { fill: var(--tinta); font-weight: 600; }
+.esq-i { stroke: var(--corrente); fill: var(--corrente); }
+.esq-i-txt { fill: var(--corrente); font: 600 14px var(--sans); }
+.esq-v-txt { fill: var(--tensao); font: 600 14px var(--sans); }
+.esq-sinal { fill: var(--tensao); font: 700 16px var(--mono); }
+.esq-fase-antes { stroke: var(--f-antes); fill: var(--f-antes); }
+.esq-fase-inicial { stroke: var(--f-inicial); }
+.esq-fase-final { stroke: var(--f-final); }
+.esq-fase-tau { stroke: var(--f-tau); }
+.t-antes { fill: var(--f-antes); } .t-inicial { fill: var(--f-inicial); } .t-final { fill: var(--f-final); } .t-tau { fill: var(--f-tau); }
+.esq-fluxo { stroke: var(--corrente); stroke-width: 4.5; stroke-linecap: round; fill: none; stroke-dasharray: 0.1 15; opacity: .85; animation: fluir 1s linear infinite; }
+@keyframes fluir { to { stroke-dashoffset: -15.1; } }
+.esq-fantasma { stroke: var(--tinta-2); stroke-width: 1.6; fill: none; stroke-dasharray: 3 3; opacity: .55; }
+
+/* ---------- explorador de fases ---------- */
+.explorador { background: var(--cartao); border: 1px solid var(--linha); border-radius: 14px; margin: 22px 0; overflow: hidden; }
+.fases { display: flex; overflow-x: auto; border-bottom: 1px solid var(--linha); }
+.fases button { border: 0; border-radius: 0; min-height: 46px; padding: 10px 16px; font: 600 14.5px var(--sans); color: var(--tinta-2); background: transparent; white-space: nowrap; border-bottom: 3px solid transparent; flex: none; }
+.fases button[aria-selected=true] { color: var(--tinta); }
+.fases button[data-fase=enunciado][aria-selected=true] { border-bottom-color: var(--tinta); }
+.fases button[data-fase=antes][aria-selected=true] { border-bottom-color: var(--f-antes); }
+.fases button[data-fase=inicial][aria-selected=true] { border-bottom-color: var(--f-inicial); }
+.fases button[data-fase=final][aria-selected=true] { border-bottom-color: var(--f-final); }
+.fases button[data-fase=tau][aria-selected=true], .fases button[data-fase=depois][aria-selected=true] { border-bottom-color: var(--f-tau); }
+.explorador .esquema { padding: 8px 12px 0; max-width: 640px; margin: 0 auto; }
+.leitura { padding: 4px 20px 18px; font-size: 15.5px; }
+.leitura p { margin: 0 0 8px; color: var(--tinta-2); }
+.valores { display: flex; flex-wrap: wrap; gap: 8px 22px; font: 500 15px/1.4 var(--mono); }
+.valores span { white-space: nowrap; }
+
+/* ---------- osciloscópio ---------- */
+.osc { background: var(--tela); border-radius: 12px; padding: 10px; margin: 18px 0; box-shadow: inset 0 0 0 1px #000, inset 0 0 40px rgba(70, 238, 156, .06); }
+.osc svg { width: 100%; height: auto; display: block; }
+.osc-grade { stroke: var(--tela-grade); stroke-width: 1; }
+.osc-eixo { stroke: var(--tela-grade-forte); stroke-width: 1.4; }
+.osc-traco { fill: none; stroke: var(--traco); stroke-width: 2.6; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(70, 238, 156, .55)); }
+.osc-traco.t2 { stroke: var(--traco-2); filter: drop-shadow(0 0 4px rgba(108, 180, 255, .5)); }
+.osc-traco.t3 { stroke: var(--tensao); filter: drop-shadow(0 0 4px rgba(255, 139, 94, .5)); }
+.math-bloco { overflow-x: auto; margin: 10px 0 16px; }
+.campos .forma { flex-basis: 100%; font-size: 15px; }
+.osc-antes { fill: none; stroke: #6F8A80; stroke-width: 2.2; }
+.osc-guia { stroke: var(--tela-texto); stroke-width: 1.2; stroke-dasharray: 5 5; fill: none; opacity: .8; }
+.osc-txt { fill: var(--tela-texto); font: 500 12.5px var(--mono); }
+.osc-txt.forte { fill: #DFFBEA; font-weight: 600; }
+.osc-legenda { display: flex; gap: 16px; padding: 6px 6px 0; font: 500 13px var(--mono); color: var(--tela-texto); flex-wrap: wrap; }
+.osc-legenda i { display: inline-block; width: 16px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+
+/* ---------- texto das etapas ---------- */
+.texto h3 { font-size: 21px; margin: 34px 0 10px; }
+.texto ul, .texto ol { padding-left: 22px; margin: 0 0 16px; }
+.texto li { margin-bottom: 6px; }
+.texto :not(pre) > code { font-size: .9em; padding: 1px 5px; border-radius: 4px; background: var(--linha-2); }
+.texto strong { font-weight: 600; }
+.texto table { border-collapse: collapse; margin: 6px 0 20px; font-size: 15px; width: 100%; }
+.texto th, .texto td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--linha); vertical-align: top; }
+.texto th { font-weight: 600; background: var(--linha-2); }
+.texto .formula { background: var(--cartao); border: 1px solid var(--linha); border-left: 4px solid var(--tinta); border-radius: 8px; padding: 10px 16px; margin: 14px 0 20px; overflow-x: auto; }
+.nota { margin: 18px 0; padding: 12px 16px; border-left: 4px solid var(--corrente); background: var(--cartao); border-radius: 0 8px 8px 0; font-size: 15.5px; }
+.nota.cuidado { border-left-color: var(--tensao); }
+.nota p:last-child { margin-bottom: 0; }
+.tabela-wrap { overflow-x: auto; }
+.ver { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+.ver a { font-size: 14px; font-weight: 600; padding: 5px 12px; border: 1.5px solid var(--corrente); border-radius: 99px; text-decoration: none; }
+
+.cab-etapa { margin-bottom: 26px; }
+.cab-etapa .num { font: 600 14px var(--mono); color: var(--tinta-2); display: block; margin-bottom: 6px; }
+.cab-etapa h1 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -.02em; text-wrap: balance; }
+.nav-etapas { display: flex; justify-content: space-between; gap: 10px; margin-top: 44px; flex-wrap: wrap; }
+
+/* treino e itens com resposta */
+.treino { margin-top: 40px; }
+.treino > h2 { font-size: 22px; margin-bottom: 6px; }
+.questao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 14px; padding: 22px; margin: 22px 0; }
+.questao > h2 { font-size: 21px; margin-bottom: 4px; }
+.questao .pts { font: 500 13px var(--mono); color: var(--tinta-2); }
+.questao .enunciado { margin: 10px 0 4px; }
+.item { border-top: 1px solid var(--linha); padding: 18px 0 6px; }
+.item:first-of-type { border-top: 0; }
+.item-p { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.item-p .l { font: 600 15px var(--mono); color: var(--tinta-2); }
+.item-p .ip { font: 500 12.5px var(--mono); color: var(--tinta-2); white-space: nowrap; }
+.item-p .feito { color: var(--ok); }
+.campos { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 12px 0 0 38px; }
+.campo { display: flex; align-items: center; gap: 8px; }
+.campo label { font-size: 15px; }
+.campo .un { font: 500 15px var(--mono); color: var(--tinta-2); }
+.escolhas { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0 38px; }
+.escolhas button.certa { border-color: var(--ok); color: var(--ok); }
+.escolhas button.errada { border-color: var(--erro); color: var(--erro); text-decoration: line-through; }
+.item-acoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0 38px; align-items: center; }
+.retorno { margin: 10px 0 0 38px; font-size: 15px; }
+.retorno:empty { display: none; }
+.retorno.ok { color: var(--ok); font-weight: 600; }
+.retorno.nao { color: var(--erro); }
+.passos { margin: 14px 0 0 38px; }
+.passo { border-left: 3px solid var(--linha); padding: 4px 0 8px 16px; margin-bottom: 8px; }
+.passo .pn { font: 600 12.5px var(--mono); color: var(--tinta-2); display: block; margin-bottom: 4px; }
+.passo .esquema { max-width: 520px; margin: 4px 0 8px; }
+.passo .valores { margin: 0 0 8px; font-size: 14px; }
+.resposta-final { margin: 6px 0 4px 38px; padding: 10px 14px; border-radius: 8px; background: var(--linha-2); font-weight: 600; }
+@media (max-width: 640px) {
+  .campos, .escolhas, .item-acoes, .retorno, .passos, .resposta-final { margin-left: 0; }
+  .questao { padding: 16px; }
+}
+
+/* widgets de laboratório */
+.lab { background: var(--cartao); border: 1px solid var(--linha); border-radius: 14px; padding: 18px; margin: 22px 0; }
+.lab h4 { margin: 0 0 4px; font-size: 16px; }
+.lab .controles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 22px; margin: 12px 0; }
+.lab label.ctl { display: grid; gap: 4px; font-size: 14.5px; }
+.lab label.ctl span { display: flex; justify-content: space-between; }
+.lab label.ctl b { font: 600 14.5px var(--mono); }
+input[type=range] { width: 100%; accent-color: var(--tinta); min-height: 30px; }
+.lab .saida-lab { font: 500 15px/1.6 var(--mono); }
+.selo-amort { display: inline-block; padding: 4px 12px; border-radius: 99px; font: 600 14px var(--sans); color: #fff; }
+.sa-super { background: var(--f-antes); } .sa-critico { background: var(--f-tau); } .sa-sub { background: var(--f-inicial); }
+.plano-s { max-width: 260px; }
+.lab-duas { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; align-items: start; }
+.edo-entrada { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 500 16px var(--mono); }
+.edo-entrada input { width: 76px; }
+.resolucao-edo { margin-top: 14px; }
+.resolucao-edo .passo { border-left-color: var(--f-tau); }
+
+/* simulado */
+.sim-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.sim-tipos { display: flex; flex-wrap: wrap; gap: 8px; }
+.sim-tipos button[aria-pressed=true] { background: var(--tinta); color: var(--cartao); border-color: var(--tinta); }
+.placar { font: 500 14px var(--mono); color: var(--tinta-2); }
+
+/* janela e aviso */
+#toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 50; background: var(--tinta); color: var(--cartao); padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 15px; display: none; max-width: calc(100% - 32px); }
+#toast.on { display: block; }
+
+@media (max-width: 900px) {
+  .abertura { grid-template-columns: 1fr; gap: 30px; }
+  .tipos { grid-template-columns: 1fr; }
+  .atalhos { grid-template-columns: 1fr; }
+  .lab-duas { grid-template-columns: 1fr; }
+  .pagina { padding: 26px 16px 80px; }
+  .secao { margin-top: 52px; }
+  .item-lista { grid-template-columns: 40px minmax(0, 1fr); }
+  .item-lista .estado { grid-column: 2; text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!--
+  Conteúdo das etapas. Cada <textarea class="etapa"> é uma etapa.
+  Formato: "chave: valor" no topo, seções "=== texto" e "=== treino".
+  No texto: markdown simples, fórmulas em $...$ e $$...$$, "@w nome" coloca um laboratório,
+  "@ver prova:questão" coloca links para questões das provas.
+  No treino: "? pergunta | resposta | unidade | explicação".
+-->
+<div id="conteudo" hidden>
+
+<textarea class="etapa">
+n: 1
+titulo: Revisão relâmpago: as ferramentas de corrente contínua
+sobre: Ohm, nós, malhas, série, paralelo e divisores. Toda questão da P3 vira um circuito destes em algum momento.
+=== texto
+Em toda questão da P3 você vai "congelar" o circuito em alguns instantes, e cada foto congelada é um circuito só com **resistores e fontes**. Então antes de tudo você precisa destas ferramentas afiadas. Se elas estão firmes, pode passar rápido por aqui.
+
+### As cinco ferramentas
+1. **Lei de Ohm**: $v = R\,i$. A corrente entra pelo lado **+** do resistor.
+2. **Lei dos nós (LCK)**: tudo que entra num nó, sai. $\sum i_{\text{entram}} = \sum i_{\text{saem}}$.
+3. **Lei das malhas (LTK)**: dando uma volta completa numa malha, a soma das tensões é zero.
+4. **Série e paralelo**: em série, soma: $R_s = R_1 + R_2$. Em paralelo, "produto pela soma": $R_p = \dfrac{R_1 R_2}{R_1 + R_2}$. O paralelo é sempre **menor** que o menor dos dois.
+5. **Divisores**:
+
+$$v_1 = V\,\frac{R_1}{R_1 + R_2} \qquad\qquad i_1 = I\,\frac{R_2}{R_1 + R_2}$$
+
+> No divisor de **corrente**, em cima da fração vai a resistência do **outro** ramo. Faz sentido: a corrente prefere o caminho mais fácil, então quanto maior o **outro** resistor, mais corrente vem para o seu.
+
+### Análise nodal com um nó só
+Várias questões da P3 têm um único nó desconhecido, ligado a fontes por resistores. A receita: chame a tensão do nó de $v$ e escreva "o que entra = o que sai", com cada corrente no formato $\frac{\text{tensão de um lado} - \text{tensão do outro}}{R}$.
+
+Exemplo da P3 2025.1 (nó P ligado aos 10 V por 1 Ω e aos 3 V por 2 Ω e 4 Ω):
+
+$$\frac{10 - v}{1} = \frac{v - 3}{2} + \frac{v - 3}{4} \;\Rightarrow\; 40 - 4v = 3v - 9 \;\Rightarrow\; v = 7\ \text{V}$$
+
+### Equivalente de Thévenin
+Na etapa 4 você vai precisar da **resistência equivalente** vista por dois terminais. Às vezes também ajuda o circuito equivalente inteiro: fonte $V_{th}$ em série com $R_{th}$.
+
+- $V_{th}$: a tensão nos terminais com eles abertos (muitas vezes um divisor de tensão).
+- $R_{th}$: zere as fontes (fonte de tensão vira fio, fonte de corrente vira circuito aberto) e calcule a resistência vista dos terminais.
+
+Exemplo da P3 2024.1: 18 V com 6 Ω e 3 Ω, e depois mais 4 Ω até o indutor. $V_{th} = 18 \cdot \frac{3}{6 + 3} = 6$ V e $R_{th} = (6 \parallel 3) + 4 = 2 + 4 = 6\ \Omega$.
+
+> Corrente com sinal negativo não é erro: só quer dizer que ela anda no sentido **contrário** ao da seta que você (ou o professor) desenhou.
+=== treino
+? Quanto vale $6\ \Omega \parallel 3\ \Omega$? | 2 | Ω | Produto pela soma: $\frac{6 \cdot 3}{6 + 3} = \frac{18}{9} = 2\ \Omega$.
+? Uma fonte de 18 V alimenta 6 Ω e 3 Ω em série. Qual é a tensão no resistor de 3 Ω? | 6 | V | Divisor de tensão: $18 \cdot \frac{3}{6 + 3} = 6$ V.
+? Uma fonte de 6 A alimenta dois ramos em paralelo: 10 Ω e 5 Ω. Qual é a corrente no ramo de 5 Ω? | 4 | A | Divisor de corrente: em cima vai o **outro** resistor. $6 \cdot \frac{10}{10 + 5} = 4$ A.
+? Um nó P liga numa fonte de 10 V por 1 Ω e numa fonte de 2 V pelo indutor em curto. Pelo 2 Ω (de P para a terra) desce quanto? E pelo indutor? Responda a corrente no indutor, de P para a fonte de 2 V. | 7 | A | P fica com 2 V (curto até a fonte). Chegam $\frac{10 - 2}{1} = 8$ A, descem $\frac{2}{2} = 1$ A pelo 2 Ω, e o resto vai pelo indutor: $8 - 1 = 7$ A. (P3 2024.2.)
+</textarea>
+
+<textarea class="etapa">
+n: 2
+titulo: Capacitor e indutor: os dois elementos com memória
+sobre: Por que a tensão no capacitor e a corrente no indutor não pulam, e o que eles viram depois de muito tempo.
+=== texto
+Resistores reagem na hora. Capacitores e indutores, não: eles guardam energia e têm **inércia**. Esta etapa é a base de tudo.
+
+| | Capacitor ($C$, em farads) | Indutor ($L$, em henrys) |
+|---|---|---|
+| Equação | $i_C = C\,\dfrac{dv_C}{dt}$ | $v_L = L\,\dfrac{di_L}{dt}$ |
+| Guarda energia em | campo elétrico: $\frac{1}{2}Cv^2$ | campo magnético: $\frac{1}{2}Li^2$ |
+| O que **não pula** | a **tensão** $v_C$ | a **corrente** $i_L$ |
+| Em regime CC vira | **circuito aberto** | **curto-circuito** (fio) |
+
+### Por que não pula?
+Se a tensão no capacitor pulasse de 2 V para 10 V num instante, $\frac{dv_C}{dt}$ seria infinito, e a corrente $C\,\frac{dv_C}{dt}$ também. Isso não existe. Por isso:
+
+$$v_C(0^+) = v_C(0^-) \qquad\qquad i_L(0^+) = i_L(0^-)$$
+
+Pense no capacitor como uma **caixa d'água**: o nível (a tensão) sobe ou desce, mas nunca muda de repente. E no indutor como uma **roda pesada girando**: a velocidade (a corrente) não para do nada.
+
+> Atenção: é só isso que não pula. A **corrente** no capacitor e a **tensão** no indutor podem pular à vontade. Tensões e correntes em resistores também.
+
+### "Bastante tempo depois": o regime permanente
+Quando o enunciado diz que a chave estava fechada "há bastante tempo", tudo já parou de mudar. As derivadas são zero:
+
+- $\frac{dv_C}{dt} = 0 \Rightarrow i_C = 0$: o capacitor é um **circuito aberto**.
+- $\frac{di_L}{dt} = 0 \Rightarrow v_L = 0$: o indutor é um **curto-circuito**.
+
+### Veja acontecendo
+No laboratório abaixo, clique na chave quando quiser, até no meio da carga. A tela é um osciloscópio. Repare: a curva **verde** (a grandeza com memória) nunca dá saltos, e a **azul** salta toda vez que a chave muda.
+
+@w bancada
+=== treino
+? Um capacitor está com 8 V em $t = 0^-$ e uma chave muda em $t = 0$. Quanto vale $v_C(0^+)$? | 8 | V | A tensão no capacitor não pula: $v_C(0^+) = v_C(0^-) = 8$ V.
+? Depois de bastante tempo ligado em CC, quanto vale a corrente num capacitor? | 0 | A | Em regime CC o capacitor é circuito aberto: $i_C = 0$.
+? Depois de bastante tempo ligado em CC, quanto vale a tensão num indutor? | 0 | V | Em regime CC o indutor é um curto: $v_L = 0$.
+</textarea>
+
+<textarea class="etapa">
+n: 3
+titulo: As três fotografias: 0⁻, 0⁺ e ∞
+sobre: O método que resolve a 1ª questão de toda P3: congelar o circuito antes, logo depois e muito depois da chave.
+=== texto
+Quase toda primeira questão da P3 pede valores em três instantes. O truque é tirar três "fotografias" do circuito. Cada foto é um circuito só de resistores e fontes, que você resolve com a etapa 1.
+
+| Foto | Chave | Capacitor vira | Indutor vira |
+|---|---|---|---|
+| $t = 0^-$ (logo antes) | posição **antiga** | circuito aberto | curto |
+| $t = 0^+$ (logo depois) | posição **nova** | fonte de tensão $v_C(0^-)$ | fonte de corrente $i_L(0^-)$ |
+| $t \to \infty$ (muito depois) | posição **nova** | circuito aberto | curto |
+
+### A ordem importa
+1. **Sempre comece pelo $0^-$.** É dele que sai a "memória": $v_C(0^-)$ ou $i_L(0^-)$.
+2. **No $0^+$**, coloque essa memória como uma fonte e resolva o circuito novo. Qualquer outra grandeza em $0^+$ (corrente num resistor, $i_C$, $v_L$) sai dessa foto.
+3. **No $\infty$**, esqueça a memória: é regime de novo, só que com a chave na posição nova.
+
+> Repare que o $0^+$ não é regime: o capacitor tem corrente e o indutor tem tensão. Por isso eles viram **fontes**, e não aberto ou curto.
+
+### Explore
+Este é o circuito da 1ª questão da P3 2026.1. Troque de foto nas abas e acompanhe a corrente andando pelos fios (azul). Os valores pedidos na prova aparecem embaixo de cada foto.
+
+@w fotos q261a
+
+### Lendo as fotos
+- Em $0^-$ a chave fechada é um atalho para a terra, e o indutor em curto leva o nó da direita para 0 V também. Por isso $i_{10}(0^-) = 0$ e os 6 A passam todos pelo indutor.
+- Em $0^+$ o indutor "lembra" os 6 A. Eles não têm para onde ir a não ser pelo 5 Ω: $v_5 = 30$ V. E o nó da direita fica em 0 V, então $v_L = 0 - 30 = -30$ V.
+- Em $\infty$ os 6 A se dividem entre o 10 Ω e o ramo de 5 Ω: $i_L = 6 \cdot \frac{10}{15} = 4$ A.
+
+@ver 2026-1:1 2025-1:1 2024-1:1 2024-2:1
+=== treino
+? Um indutor tinha 5 A em $t = 0^-$. Em $t = 0^+$ ele vira o quê? Responda o valor da fonte. | 5 | A | Em $0^+$ o indutor vira uma fonte de corrente com o mesmo valor de $0^-$: 5 A, no mesmo sentido.
+? Na P3 2024.1 (1ª questão), com a chave em A: 10 V, 1 Ω e 4 Ω em série, e o capacitor em paralelo com o 4 Ω. Quanto vale $v_C(0^-)$? | 8 | V | Capacitor aberto: corrente $\frac{10}{1 + 4} = 2$ A, e $v_C = 4 \cdot 2 = 8$ V.
+? Continuação: em $t = 0$ o capacitor passa a ligar numa fonte de 6 V por 2 Ω. Qual é a corrente que **sai** do + do capacitor em $0^+$? | 1 | A | Capacitor vira fonte de 8 V: $\frac{8 - 6}{2} = 1$ A saindo do +. Como a seta $i_C$ da prova aponta para dentro do +, a resposta da prova é $i_C(0^+) = -1$ A.
+</textarea>
+
+<textarea class="etapa">
+n: 4
+titulo: A constante de tempo τ
+sobre: Quão rápido o circuito muda. Resistência equivalente com as fontes zeradas.
+=== texto
+Depois da chave, o circuito vai de $x(0^+)$ até $x(\infty)$. A **constante de tempo** $\tau$ (em segundos) diz o quão rápido:
+
+$$\tau_{RC} = R_{eq}\,C \qquad\qquad \tau_{RL} = \frac{L}{R_{eq}}$$
+
+Cuidado para não inverter: no RL a resistência fica **embaixo**. (Truque: resistência grande "segura" o capacitor e deixa a carga lenta, mas "freia" o indutor e deixa tudo rápido.)
+
+### Achando o $R_{eq}$ em 4 passos
+1. Use o circuito de **depois da chave** ($t > 0$).
+2. Tire o capacitor ou o indutor. Os dois terminais que ficaram são de onde você vai "olhar".
+3. **Zere as fontes**: fonte de tensão vira **fio** (curto). Fonte de corrente vira **circuito aberto**.
+4. Simplifique série e paralelo até sobrar um resistor só, visto dos dois terminais.
+
+> Por que zerar as fontes? O $\tau$ é o "jeito" do circuito responder, e isso depende só dos resistores e do elemento, não de quem está empurrando a corrente.
+
+### Explore
+P3 2024.1, 2ª questão: veja a aba **τ**. A fonte de 18 V vira fio, então o 6 Ω e o 3 Ω ficam em paralelo (2 Ω), e esse paralelo fica em série com o 4 Ω: $R_{eq} = 6\ \Omega$ e $\tau = \frac{1{,}5}{6} = 0{,}25$ s.
+
+@w fotos q241b
+
+### Duas pegadinhas que já caíram
+- **Fonte de corrente vira aberta** (P3 2026.1): com a fonte de 6 A aberta, o 10 Ω e o 5 Ω ficam em **série**: $R_{eq} = 15\ \Omega$.
+- **Resistor em paralelo com fonte de tensão some** (P3 2025.1, 2ª questão): quando a fonte de 3 V vira fio, o 2 Ω que estava em paralelo com ela fica com os dois terminais na terra. Ele não conduz e sai da conta: $R_{eq} = 1\ \Omega$.
+
+@ver 2026-1:1 2025-2:2 2024-1:2 2025-1:2
+=== treino
+? P3 2025.2 (2ª questão): para $t > 0$, o capacitor de 1 F vê a fonte de 10 V por 4 Ω e 2 Ω em série. Quanto vale $\tau$? | 6 | s | Fonte zerada vira fio: $R_{eq} = 4 + 2 = 6\ \Omega$, $\tau = 6 \cdot 1 = 6$ s.
+? P3 2026.1 (1ª questão): indutor de 1,5 H, com $R_{eq} = 15\ \Omega$. Quanto vale $\tau$? | 0,1 | s | $\tau = \frac{L}{R_{eq}} = \frac{1{,}5}{15} = 0{,}1$ s.
+? P3 2024.2 (1ª questão): depois que a chave abre, o indutor fica entre o nó P (com 2 Ω para a terra) e a fonte de 2 V, com 3 Ω em paralelo com ele. Quanto vale $R_{eq}$? | 1,2 | Ω | Zerando a fonte, os dois lados do indutor ficam ligados à terra pelo 2 Ω e pelo 3 Ω: paralelo, $\frac{2 \cdot 3}{5} = 1{,}2\ \Omega$.
+</textarea>
+
+<textarea class="etapa">
+n: 5
+titulo: A fórmula da 1ª ordem e o gráfico
+sobre: Uma fórmula só para qualquer tensão ou corrente, e como esboçar o gráfico que vale ponto.
+=== texto
+Com as três fotos e o $\tau$, você escreve qualquer grandeza do circuito para $t > 0$:
+
+<div class="formula">
+
+$$x(t) = x(\infty) + \big[x(0^+) - x(\infty)\big]\,e^{-t/\tau}$$
+
+</div>
+
+- Vale para **qualquer** tensão ou corrente do circuito de 1ª ordem: $v_C$, $i_L$, $i_C$, $v_L$, corrente num resistor...
+- Use o valor em $0^+$ **daquela grandeza**, e não em $0^-$. Para $v_C$ e $i_L$ tanto faz (são iguais), mas para as outras faz toda a diferença.
+
+Exemplo (P3 2026.1): $i_L(0^+) = 6$ A, $i_L(\infty) = 4$ A, $\tau = 0{,}1$ s:
+
+$$i_L(t) = 4 + (6 - 4)\,e^{-t/0{,}1} = 4 + 2\,e^{-10t}\ \text{A}$$
+
+### Quanto falta depois de cada τ
+
+| Tempo | $e^{-t/\tau}$ | Já percorreu |
+|---|---|---|
+| $\tau$ | 0,368 | 63% |
+| $2\tau$ | 0,135 | 86% |
+| $3\tau$ | 0,050 | 95% |
+| $5\tau$ | 0,007 | mais de 99%: "acabou" |
+
+### Esboçando o gráfico na prova
+1. Eixos com nome e unidade: $t$ (s) na horizontal, a grandeza na vertical.
+2. Marque $x(0^+)$ no eixo vertical, em $t = 0$.
+3. Desenhe uma linha **tracejada** horizontal em $x(\infty)$: é a assíntota.
+4. Marque $\tau$ (e se der, $5\tau$) no eixo do tempo.
+5. Desenhe a curva saindo de $x(0^+)$ e "deitando" na assíntota. Em $t = \tau$ ela já fez 63% do caminho.
+6. Se pedir o gráfico a partir de $t < 0$, desenhe uma reta em $x(0^-)$ antes do zero.
+
+> Truque de desenho: a reta tangente à curva em $t = 0$ encosta na assíntota exatamente em $t = \tau$. Mexa no laboratório e veja.
+
+@w curva
+
+@ver 2026-1:1 2025-2:1 2025-1:2 2024-1:2 2024-2:2
+=== treino
+? $v_C(0^+) = 2$ V, $v_C(\infty) = 10$ V e $\tau = 6$ s. Quanto vale $v_C$ em $t = 6$ s? | 7,06 | V | $v_C(\tau) = 10 + (2 - 10)e^{-1} = 10 - 8 \cdot 0{,}368 \approx 7{,}06$ V.
+? Na expressão $i(t) = 3 - e^{-t}$ A, qual é o valor inicial $i(0^+)$? | 2 | A | Em $t = 0$, $e^{0} = 1$: $i(0^+) = 3 - 1 = 2$ A. (P3 2025.1, 2ª questão.)
+? $v(t) = 4 + 8e^{-t/6}$ V num capacitor de 3 F, com a seta de $i$ entrando pelo +. Quanto vale $i(0^+)$? | -4 | A | $i = C\frac{dv}{dt} = 3 \cdot \left(-\frac{8}{6}\right)e^{-t/6} = -4\,e^{-t/6}$. Em $0^+$: $-4$ A. (P3 2024.2.)
+</textarea>
+
+<textarea class="etapa">
+n: 6
+titulo: Sinais, setas e o que pode pular
+sobre: As pegadinhas de sinal mais comuns e a pergunta "é igual em 0⁻ e 0⁺?".
+=== texto
+### A seta manda no sinal
+Quem define o sinal de uma corrente é a **seta do desenho**, e o de uma tensão é o **+ e −** do desenho. Calcule o valor físico e depois compare com o desenho:
+
+- Corrente andando no sentido da seta: positiva.
+- Corrente andando contra a seta: **negativa**. Escreva o sinal na resposta.
+
+Exemplo (P3 2025.2): em regime, a fonte de 6 V empurra 3 A pelo 2 Ω da **direita para a esquerda**, mas a seta de $i_2$ aponta para a direita. Resposta: $i_2(\infty) = -3$ A.
+
+### Convenção passiva
+As equações $v = Ri$, $i_C = C\frac{dv_C}{dt}$ e $v_L = L\frac{di_L}{dt}$ valem quando a seta da corrente **entra pelo +**. É o caso de quase todos os desenhos da P3. Se a seta entrar pelo −, ponha um sinal de menos: $i_C = -C\frac{dv_C}{dt}$.
+
+> Na P3 2025.1 (3ª questão), a corrente $i$ atravessa o capacitor entrando pelo **−**. Por isso, ali, $i = -C\frac{dv}{dt}$.
+
+### O que pode pular de $0^-$ para $0^+$
+
+| Não pode pular | Pode pular |
+|---|---|
+| tensão no capacitor $v_C$ | corrente no capacitor $i_C$ |
+| corrente no indutor $i_L$ | tensão no indutor $v_L$ |
+| | tensão e corrente em qualquer resistor |
+| | corrente numa fonte de tensão |
+
+Pergunta clássica (P3 2025.2): **"$v_4(0^-) = v_4(0^+)$? Justifique."**
+
+Resposta modelo: *Não. $v_4(0^-) = 8$ V e $v_4(0^+) = 5{,}33$ V. A tensão num resistor pode variar instantaneamente; só a tensão no capacitor e a corrente no indutor são contínuas.*
+
+> Às vezes um valor de resistor **coincide** em $0^-$ e $0^+$, como $i_2 = 2$ A na P3 2025.1. Pode acontecer, mas não é garantido. Na dúvida, calcule as duas fotos.
+
+### Derivadas em $0^+$
+Elas vão aparecer na 2ª ordem, mas já dá para entender aqui:
+
+$$\frac{dv_C}{dt}(0^+) = \frac{i_C(0^+)}{C} \qquad\qquad \frac{di_L}{dt}(0^+) = \frac{v_L(0^+)}{L}$$
+
+O sinal de $v_L(0^+)$ diz se a corrente no indutor vai subir ($+$) ou cair ($-$).
+
+@ver 2025-2:1 2025-2:2 2025-1:1 2024-2:1
+=== treino
+? P3 2025.2 (2ª questão): $v_4(0^-) = 8$ V. Para $t > 0$, $v_4(t) = \frac{16}{3}e^{-t/6}$ V. Quanto vale $v_4(0^+)$? | 5,333 | V | Em $t = 0$: $\frac{16}{3} \approx 5{,}33$ V. É diferente de 8 V: tensão em resistor pode pular.
+? Um indutor de 1 H tem $v_L(0^+) = -4$ V. Quanto vale $\frac{di_L}{dt}(0^+)$? | -4 | A/s | $\frac{di_L}{dt} = \frac{v_L}{L} = \frac{-4}{1} = -4$ A/s: a corrente vai cair.
+</textarea>
+
+<textarea class="etapa">
+n: 7
+titulo: 2ª ordem: o circuito RLC e o amortecimento
+sobre: Quando o circuito tem L e C juntos. α, ω₀ e os três tipos de amortecimento.
+=== texto
+Se, depois da chave, o circuito tiver um **indutor e um capacitor** que não dá para juntar num só, ele é de **2ª ordem**. A grandeza obedece a uma equação assim:
+
+$$\frac{d^2x}{dt^2} + 2\alpha\,\frac{dx}{dt} + \omega_0^2\,x = K$$
+
+A resposta natural vem da **equação característica**:
+
+<div class="formula">
+
+$$s^2 + 2\alpha s + \omega_0^2 = 0 \quad\Rightarrow\quad s = -\alpha \pm \sqrt{\alpha^2 - \omega_0^2}$$
+
+</div>
+
+### Achando α e ω₀
+
+| Circuito | $\alpha$ | $\omega_0$ |
+|---|---|---|
+| RLC **série** | $\dfrac{R}{2L}$ | $\dfrac{1}{\sqrt{LC}}$ |
+| RLC **paralelo** | $\dfrac{1}{2RC}$ | $\dfrac{1}{\sqrt{LC}}$ |
+| Equação $x'' + a\,x' + b\,x = K$ | $\dfrac{a}{2}$ | $\sqrt{b}$ |
+
+Na P3 os circuitos de 2ª ordem foram **série**: depois da chave sobra uma malha só, com resistores, L e C. Some todos os resistores dessa malha (P3 2026.1: $40 + 60 = 100\ \Omega$).
+
+### Os três tipos
+
+| Comparação | Nome | Raízes | Resposta natural |
+|---|---|---|---|
+| $\alpha > \omega_0$ | **supercrítico** (superamortecido) | reais e diferentes | $A_1e^{s_1t} + A_2e^{s_2t}$ |
+| $\alpha = \omega_0$ | **crítico** | real dupla, $s = -\alpha$ | $(A_1 + A_2\,t)\,e^{-\alpha t}$ |
+| $\alpha < \omega_0$ | **subamortecido** | complexas, $-\alpha \pm j\omega_d$ | $e^{-\alpha t}(B_1\cos\omega_d t + B_2\sin\omega_d t)$ |
+
+com $\omega_d = \sqrt{\omega_0^2 - \alpha^2}$ (frequência amortecida). Subamortecido é o único que **oscila**.
+
+> Quando a questão pede para "caracterizar a resposta natural", escreva as três coisas: o tipo (com a comparação entre $\alpha$ e $\omega_0$), as raízes e a forma da resposta.
+
+### Explore
+Mexa no R, no L e no C. As raízes andam no plano complexo, e a curva muda de forma.
+
+@w rlc
+
+### Exemplo (P3 2024.2): R = 1 kΩ, L = 1 H, C = 10 nF, em série
+
+$$\alpha = \frac{1000}{2 \cdot 1} = 500\ \text{s}^{-1} \qquad \omega_0 = \frac{1}{\sqrt{1 \cdot 10^{-8}}} = 10^4\ \text{rad/s}$$
+
+Como $\alpha < \omega_0$: **subamortecido**.
+
+@ver 2024-2:3 2026-1:2 2025-1:3
+=== treino
+? RLC série com R = 100 Ω, L = 2,5 H e C = 1 mF. Quanto vale α? | 20 | 1/s | $\alpha = \frac{R}{2L} = \frac{100}{5} = 20\ \text{s}^{-1}$.
+? E ω₀ desse mesmo circuito? | 20 | rad/s | $\omega_0 = \frac{1}{\sqrt{2{,}5 \cdot 10^{-3}}} = \frac{1}{0{,}05} = 20$ rad/s. Como $\alpha = \omega_0$, é amortecimento **crítico**. (P3 2026.1.)
+? Equação $i'' + 2i' + 5i = 10$. Quanto vale $\omega_d$? | 2 | rad/s | $\alpha = 1$, $\omega_0 = \sqrt{5}$, $\omega_d = \sqrt{5 - 1} = 2$ rad/s. (P3 2025.2.)
+</textarea>
+
+<textarea class="etapa">
+n: 8
+titulo: 2ª ordem: condições iniciais e solução completa
+sobre: x(0⁺), dx/dt(0⁺), resposta forçada e as duas constantes. A receita completa da 3ª questão.
+=== texto
+A solução completa é a **resposta forçada** mais a **natural**:
+
+$$x(t) = x_f + x_n(t)$$
+
+### A receita
+1. **$x(0^+)$**: pela continuidade ($v_C$ e $i_L$ não pulam). Foto de $0^-$, como na etapa 3.
+2. **$\frac{dx}{dt}(0^+)$**: na foto de $0^+$, ache $v_L(0^+)$ ou $i_C(0^+)$ e use
+
+$$\frac{di_L}{dt}(0^+) = \frac{v_L(0^+)}{L} \qquad\qquad \frac{dv_C}{dt}(0^+) = \frac{i_C(0^+)}{C}$$
+
+3. **Resposta forçada $x_f$**: é o valor final (foto de $\infty$). Se a questão der a equação $x'' + a\,x' + b\,x = K$, as derivadas de uma constante são zero, então $b\,x_f = K \Rightarrow x_f = \frac{K}{b}$.
+4. **Tipo e forma da natural**: etapa 7.
+5. **Constantes**: some $x_f$ com a natural, e use $x(0^+)$ e $x'(0^+)$:
+
+| Tipo | Equação de $x(0^+)$ | Equação de $x'(0^+)$ |
+|---|---|---|
+| supercrítico | $x_f + A_1 + A_2 = x(0^+)$ | $s_1A_1 + s_2A_2 = x'(0^+)$ |
+| crítico | $x_f + A_1 = x(0^+)$ | $A_2 - \alpha A_1 = x'(0^+)$ |
+| subamortecido | $x_f + B_1 = x(0^+)$ | $-\alpha B_1 + \omega_d B_2 = x'(0^+)$ |
+
+> Erro clássico: usar $x(0^+)$ para achar $A_1$ e esquecer de descontar o $x_f$. A constante é $x(0^+) - x_f$.
+
+### Exemplo completo (P3 2026.1, 2ª questão)
+- $i(0^+) = 0$ e $v(0^+) = 24$ V (continuidade).
+- Na malha em $0^+$: $v_L = -v = -24$ V, então $\frac{di}{dt}(0^+) = \frac{-24}{2{,}5} = -9{,}6$ A/s.
+- $\alpha = \omega_0 = 20$: **crítico**. Sem fonte para $t > 0$: $i_f = 0$.
+- $i(t) = (A_1 + A_2 t)e^{-20t}$, com $A_1 = 0$ e $A_2 - 20 \cdot 0 = -9{,}6$.
+
+$$i(t) = -9{,}6\,t\,e^{-20t}\ \text{A}$$
+
+### Resolvedor passo a passo
+Digite qualquer equação do tipo $x'' + a\,x' + b\,x = K$ com as condições iniciais. Ele mostra a resolução completa, do jeito que você deve escrever na prova. Já vem com a 3ª questão da P3 2025.2.
+
+@w edo
+
+@ver 2025-2:3 2024-1:3 2026-1:2 2025-1:3
+=== treino
+? $v'' + 5v' + 6v = 24$. Quanto vale a resposta forçada $v_f$? | 4 | V | Derivadas da constante são zero: $6v_f = 24 \Rightarrow v_f = 4$ V. (P3 2024.1.)
+? Continuação: raízes $-2$ e $-3$, $v(0) = 12$ e $v'(0) = -12$. Quanto vale $A_1$ (o coeficiente de $e^{-2t}$)? | 12 | V | $A_1 + A_2 = 12 - 4 = 8$ e $-2A_1 - 3A_2 = -12$. Daí $A_2 = -4$ e $A_1 = 12$.
+? $i'' + 2i' + 5i = 10$ com $i(0) = 4$: quanto vale $B_1$? | 2 | A | $i_f = 2$, então $B_1 = i(0) - i_f = 4 - 2 = 2$.
+</textarea>
+
+</div>
+
+<textarea id="formulas" hidden>
+### 1ª ordem (um C ou um L)
+
+| | Capacitor | Indutor |
+|---|---|---|
+| Equação | $i_C = C\,\frac{dv_C}{dt}$ | $v_L = L\,\frac{di_L}{dt}$ |
+| Não pula | $v_C(0^+) = v_C(0^-)$ | $i_L(0^+) = i_L(0^-)$ |
+| Regime CC ($0^-$ e $\infty$) | aberto | curto |
+| Em $0^+$ vira | fonte de tensão $v_C(0^-)$ | fonte de corrente $i_L(0^-)$ |
+| Constante de tempo | $\tau = R_{eq}\,C$ | $\tau = \frac{L}{R_{eq}}$ |
+
+$R_{eq}$: circuito de **depois** da chave, sem o C ou L, com as fontes zeradas (fonte de tensão vira fio, fonte de corrente vira aberto).
+
+<div class="formula">
+
+$$x(t) = x(\infty) + \big[x(0^+) - x(\infty)\big]\,e^{-t/\tau}$$
+
+</div>
+
+Vale para qualquer tensão ou corrente. Em $t = \tau$: 63% do caminho. Em $5\tau$: acabou.
+
+Derivadas em $0^+$: $\frac{dv_C}{dt}(0^+) = \frac{i_C(0^+)}{C}$ e $\frac{di_L}{dt}(0^+) = \frac{v_L(0^+)}{L}$.
+
+### 2ª ordem (L e C juntos)
+
+$$x'' + 2\alpha\,x' + \omega_0^2\,x = K \qquad s^2 + 2\alpha s + \omega_0^2 = 0 \qquad s = -\alpha \pm \sqrt{\alpha^2 - \omega_0^2}$$
+
+| | $\alpha$ | $\omega_0$ |
+|---|---|---|
+| RLC série | $\frac{R}{2L}$ | $\frac{1}{\sqrt{LC}}$ |
+| RLC paralelo | $\frac{1}{2RC}$ | $\frac{1}{\sqrt{LC}}$ |
+| $x'' + a\,x' + b\,x = K$ | $\frac{a}{2}$ | $\sqrt{b}$ |
+
+| Tipo | Quando | $x(t) = x_f + \dots$ | Constantes |
+|---|---|---|---|
+| Supercrítico | $\alpha > \omega_0$ | $A_1e^{s_1t} + A_2e^{s_2t}$ | $A_1 + A_2 = x(0) - x_f$; $s_1A_1 + s_2A_2 = x'(0)$ |
+| Crítico | $\alpha = \omega_0$ | $(A_1 + A_2t)\,e^{-\alpha t}$ | $A_1 = x(0) - x_f$; $A_2 - \alpha A_1 = x'(0)$ |
+| Subamortecido | $\alpha < \omega_0$ | $e^{-\alpha t}(B_1\cos\omega_dt + B_2\sin\omega_dt)$ | $B_1 = x(0) - x_f$; $-\alpha B_1 + \omega_dB_2 = x'(0)$ |
+
+$\omega_d = \sqrt{\omega_0^2 - \alpha^2}$. Resposta forçada: $x_f = x(\infty)$, ou $x_f = \frac{K}{b}$ pela equação.
+
+### Sinais
+- A seta do desenho manda: contra a seta, a resposta é **negativa**.
+- Convenção passiva (seta entrando pelo +): $v = Ri$, $i_C = C\frac{dv}{dt}$, $v_L = L\frac{di}{dt}$. Entrando pelo −, ponha um sinal de menos.
+- Podem pular de $0^-$ para $0^+$: $i_C$, $v_L$ e tudo nos resistores. Não pulam: $v_C$ e $i_L$.
+</textarea>
+
+<script>
+'use strict';
+/* ============================================================
+   Motor de circuitos: análise nodal modificada (MNA) em CC
+   e transitórios de 1ª e 2ª ordem.
+   Coordenadas em "grade". Cada ponto da grade é um nó.
+   Convenções de cada elemento (de a para b):
+   - R: corrente a→b, tensão Va−Vb
+   - V: a = −, b = +; corrente medida de a para b por dentro (sai pelo +)
+   - I: a corrente passa pela fonte de a para b (a seta aponta para b)
+   - C, L: a é o terminal +; corrente a→b (convenção passiva)
+   - SW: chave entre a e b; SPDT: comum c, posições A e B
+   - W: fio (lista de pontos)
+   ============================================================ */
+const MOTOR = (() => {
+  const chave = p => p[0] + ',' + p[1];
+  const eps = 1e-9;
+
+  function noSegmento(p, a, b) {
+    if (a[0] === b[0] && p[0] === a[0]) return p[1] > Math.min(a[1], b[1]) + eps && p[1] < Math.max(a[1], b[1]) - eps;
+    if (a[1] === b[1] && p[1] === a[1]) return p[0] > Math.min(a[0], b[0]) + eps && p[0] < Math.max(a[0], b[0]) - eps;
+    return false;
+  }
+
+  /* Lista todos os pontos com terminais e quebra os fios nesses pontos. */
+  function preparar(circ) {
+    const pontos = new Map();
+    const add = p => pontos.set(chave(p), p);
+    for (const e of circ.elementos) {
+      if (e.t === 'W') e.p.forEach(add);
+      else if (e.t === 'SPDT') [e.c, e.A, e.B].forEach(add);
+      else { add(e.a); add(e.b); }
+    }
+    const segmentos = [];
+    for (const e of circ.elementos) {
+      if (e.t !== 'W') continue;
+      for (let i = 0; i < e.p.length - 1; i++) {
+        const a = e.p[i], b = e.p[i + 1];
+        const dentro = [...pontos.values()].filter(p => noSegmento(p, a, b));
+        dentro.sort((p, q) => (Math.abs(p[0] - a[0]) + Math.abs(p[1] - a[1])) - (Math.abs(q[0] - a[0]) + Math.abs(q[1] - a[1])));
+        const seq = [a, ...dentro, b];
+        for (let k = 0; k < seq.length - 1; k++) segmentos.push({ a: seq[k], b: seq[k + 1] });
+      }
+    }
+    return { pontos, segmentos };
+  }
+
+  /* Resolve um circuito resistivo. ramos: {tipo:'G'|'E'|'J', a, b, valor, ref} */
+  function resolver(circ, ramos) {
+    const { pontos } = preparar(circ);
+    const terra = chave(circ.terra);
+    const idx = new Map();
+    let n = 0;
+    for (const k of pontos.keys()) if (k !== terra) idx.set(k, n++);
+    const nE = ramos.filter(r => r.tipo === 'E').length;
+    const N = n + nE;
+    const A = Array.from({ length: N }, () => new Float64Array(N));
+    const z = new Float64Array(N);
+    const I = p => { const k = chave(p); return k === terra ? -1 : idx.get(k); };
+    for (let i = 0; i < n; i++) A[i][i] += 1e-10;   // gmin: evita nós flutuantes
+    let e = 0;
+    const posE = new Map();
+    for (const r of ramos) {
+      const a = I(r.a), b = I(r.b);
+      if (r.tipo === 'G') {
+        if (a >= 0) A[a][a] += r.valor;
+        if (b >= 0) A[b][b] += r.valor;
+        if (a >= 0 && b >= 0) { A[a][b] -= r.valor; A[b][a] -= r.valor; }
+      } else if (r.tipo === 'J') {
+        if (a >= 0) z[a] -= r.valor;
+        if (b >= 0) z[b] += r.valor;
+      } else {
+        const k = n + e++;
+        posE.set(r, k);
+        // corrente x flui de a para b por dentro do ramo: sai do nó b, entra... (sai de a)
+        if (a >= 0) { A[a][k] += 1; A[k][a] -= 1; }
+        if (b >= 0) { A[b][k] -= 1; A[k][b] += 1; }
+        z[k] = r.valor;   // Vb − Va = valor
+      }
+    }
+    const x = gauss(A, z);
+    const V = p => { const i = I(p); return i < 0 ? 0 : x[i]; };
+    const corrente = r => {
+      if (r.tipo === 'G') return (V(r.a) - V(r.b)) * r.valor;
+      if (r.tipo === 'J') return r.valor;
+      return x[posE.get(r)];
+    };
+    return { V, corrente };
+  }
+
+  function gauss(A, b) {
+    const n = b.length;
+    const M = A.map((l, i) => [...l, b[i]]);
+    for (let c = 0; c < n; c++) {
+      let p = c;
+      for (let l = c + 1; l < n; l++) if (Math.abs(M[l][c]) > Math.abs(M[p][c])) p = l;
+      [M[c], M[p]] = [M[p], M[c]];
+      const piv = M[c][c];
+      if (Math.abs(piv) < 1e-14) continue;
+      for (let l = 0; l < n; l++) {
+        if (l === c) continue;
+        const f = M[l][c] / piv;
+        if (f) for (let k = c; k <= n; k++) M[l][k] -= f * M[c][k];
+      }
+    }
+    return M.map((l, i) => Math.abs(l[i]) < 1e-14 ? 0 : l[n] / l[i]);
+  }
+
+  /*
+    Monta os ramos para uma situação:
+    modo: 'regime' (C aberto, L curto), 'inicial' (C = fonte vC, L = fonte iL), 'zerado' (fontes zeradas, para Req)
+    chaves: 'antes' ou 'depois'
+    estado: { [idC]: vC, [idL]: iL } para o modo inicial
+  */
+  function ramos(circ, { modo, chaves, estado = {}, zerar = false, teste = null }) {
+    const { segmentos } = preparar(circ);
+    const rs = [];
+    const lig = new Map();   // elemento → ramo (para medir)
+    for (const s of segmentos) rs.push({ tipo: 'E', a: s.a, b: s.b, valor: 0, fio: true });
+    for (const e of circ.elementos) {
+      let r = null;
+      if (e.t === 'R') r = { tipo: 'G', a: e.a, b: e.b, valor: 1 / e.valor };
+      if (e.t === 'V') r = { tipo: 'E', a: e.a, b: e.b, valor: zerar ? 0 : e.valor };
+      if (e.t === 'I') r = zerar ? null : { tipo: 'J', a: e.a, b: e.b, valor: e.valor };
+      if (e.t === 'SW') {
+        const st = e[chaves];
+        if (st === 'fechada') r = { tipo: 'E', a: e.a, b: e.b, valor: 0 };
+      }
+      if (e.t === 'SPDT') {
+        const pos = e[chaves];
+        if (pos === 'A' || pos === 'B') r = { tipo: 'E', a: e.c, b: e[pos], valor: 0 };
+      }
+      if (e.t === 'C') {
+        if (teste === e.id) r = { tipo: 'J', a: e.b, b: e.a, valor: 1 };
+        else if (modo === 'inicial') r = { tipo: 'E', a: e.b, b: e.a, valor: estado[e.id] || 0, inv: true };
+      }
+      if (e.t === 'L') {
+        if (teste === e.id) r = { tipo: 'J', a: e.b, b: e.a, valor: 1 };
+        else if (modo === 'inicial') r = { tipo: 'J', a: e.a, b: e.b, valor: estado[e.id] || 0 };
+        else r = { tipo: 'E', a: e.a, b: e.b, valor: 0 };
+      }
+      if (r) { rs.push(r); lig.set(e.id, r); }
+    }
+    return { rs, lig, segmentos };
+  }
+
+  /* Fotografia do circuito: tensões de nó e corrente/tensão de cada elemento. */
+  function foto(circ, opcoes) {
+    const { rs, lig, segmentos } = ramos(circ, opcoes);
+    const sol = resolver(circ, rs);
+    const el = {};
+    for (const e of circ.elementos) {
+      if (!e.id) continue;
+      const r = lig.get(e.id);
+      let i = 0;
+      if (r) {
+        i = sol.corrente(r);
+        if (r.inv) i = -i;             // fonte que substitui o C está ao contrário
+      }
+      if (e.t === 'SPDT') { el[e.id] = { i, v: 0 }; continue; }
+      const v = sol.V(e.a) - sol.V(e.b);
+      el[e.id] = { i, v };
+    }
+    const fios = segmentos.map((s, k) => ({ a: s.a, b: s.b, i: sol.corrente(rs[k]) }));
+    return { V: sol.V, el, fios, ramos: rs, lig, sol };
+  }
+
+  function armazenadores(circ) { return circ.elementos.filter(e => e.t === 'C' || e.t === 'L'); }
+
+  /* Resistência equivalente vista pelos terminais de um elemento (fontes zeradas, chaves depois). */
+  function req(circ, id) {
+    const f = foto(circ, { modo: 'zerado', chaves: 'depois', zerar: true, teste: id, estado: {} });
+    // teste injeta 1 A em a (entra por a vindo de b): Req = Va − Vb
+    const e = circ.elementos.find(x => x.id === id);
+    return f.V(e.a) - f.V(e.b);
+  }
+
+  /*
+    Análise completa do transitório.
+    Retorna as fotos (antes, inicial, final), o estado inicial e a dinâmica:
+    1ª ordem: tau; 2ª ordem: alfa, w0, raízes e matriz de estado.
+  */
+  function analisar(circ) {
+    const arm = armazenadores(circ);
+    const antes = foto(circ, { modo: 'regime', chaves: 'antes' });
+    const estado = {};
+    for (const e of arm) estado[e.id] = e.t === 'C' ? antes.el[e.id].v : antes.el[e.id].i;
+    const inicial = foto(circ, { modo: 'inicial', chaves: 'depois', estado });
+    const final = foto(circ, { modo: 'regime', chaves: 'depois' });
+    const res = { antes, inicial, final, estado, arm };
+    if (arm.length === 1) {
+      const e = arm[0];
+      const R = req(circ, e.id);
+      res.req = R;
+      res.tau = e.t === 'C' ? R * e.valor : e.valor / R;
+      res.ordem = 1;
+    } else if (arm.length === 2) {
+      // matriz de estado: x = [vC, iL]; dvC/dt = iC/C; diL/dt = vL/L
+      const C = arm.find(e => e.t === 'C'), L = arm.find(e => e.t === 'L');
+      const unit = (vc, il) => foto(circ, { modo: 'inicial', chaves: 'depois', zerar: true, estado: { [C.id]: vc, [L.id]: il } });
+      const f1 = unit(1, 0), f2 = unit(0, 1);
+      const M = [
+        [f1.el[C.id].i / C.valor, f2.el[C.id].i / C.valor],
+        [f1.el[L.id].v / L.valor, f2.el[L.id].v / L.valor],
+      ];
+      const tr = M[0][0] + M[1][1], det = M[0][0] * M[1][1] - M[0][1] * M[1][0];
+      res.ordem = 2;
+      res.M = M;
+      res.alfa = -tr / 2;
+      res.w0 = Math.sqrt(det);
+      res.C = C; res.L = L;
+      res.derivadas = { [C.id]: inicial.el[C.id].i / C.valor, [L.id]: inicial.el[L.id].v / L.valor };
+      res.unit = unit;
+    }
+    return res;
+  }
+
+  /* Valor de uma medida numa foto. medida: {el:'id', q:'i'|'v'} */
+  function medir(f, m) { const x = f.el[m.el]; return m.q === 'v' ? x.v : x.i; }
+
+  /* Derivada de uma medida em 0+ (2ª ordem): combinação linear das derivadas do estado. */
+  function derivada(res, m) {
+    const d = res.derivadas;
+    const f = res.unit(d[res.C.id], d[res.L.id]);
+    return medir(f, m);
+  }
+
+  /* Raízes e forma da resposta natural a partir de alfa e w0. */
+  function amortecimento(alfa, w0) {
+    const d = alfa * alfa - w0 * w0;
+    const tol = 1e-6 * Math.max(1e-12, alfa * alfa, w0 * w0);
+    if (Math.abs(d) <= tol) return { tipo: 'critico', s1: -alfa, s2: -alfa };
+    if (d > 0) return { tipo: 'super', s1: -alfa + Math.sqrt(d), s2: -alfa - Math.sqrt(d) };
+    return { tipo: 'sub', wd: Math.sqrt(-d), s1: -alfa, s2: -alfa };
+  }
+
+  /* Solução geral x(t) = xf + natural, com x(0)=x0 e x'(0)=dx0. */
+  function solucao2(alfa, w0, xf, x0, dx0) {
+    const am = amortecimento(alfa, w0);
+    const y0 = x0 - xf;
+    let f, k;
+    if (am.tipo === 'super') {
+      const { s1, s2 } = am;
+      const A2 = (dx0 - s1 * y0) / (s2 - s1), A1 = y0 - A2;
+      k = { A1, A2, s1, s2 };
+      f = t => xf + A1 * Math.exp(s1 * t) + A2 * Math.exp(s2 * t);
+    } else if (am.tipo === 'critico') {
+      const A1 = y0, A2 = dx0 + alfa * y0;
+      k = { A1, A2 };
+      f = t => xf + (A1 + A2 * t) * Math.exp(-alfa * t);
+    } else {
+      const B1 = y0, B2 = (dx0 + alfa * y0) / am.wd;
+      k = { B1, B2, wd: am.wd };
+      f = t => xf + Math.exp(-alfa * t) * (B1 * Math.cos(am.wd * t) + B2 * Math.sin(am.wd * t));
+    }
+    return { ...am, ...k, xf, f };
+  }
+
+  return { analisar, foto, req, medir, derivada, amortecimento, solucao2, preparar, chave };
+})();
+if (typeof module !== 'undefined') module.exports = MOTOR;
+
+/* Circuitos das provas, em coordenadas de grade. */
+const CIRCUITOS = {
+  // P3 2026.1, 1ª questão: RL com fonte de corrente
+  q261a: {
+    terra: [0, 4],
+    elementos: [
+      { id: 'R5', t: 'R', a: [0, 0], b: [0, 4], valor: 5, rot: '5 Ω' },
+      { t: 'W', p: [[0, 0], [2, 0]] },
+      { id: 'S', t: 'SW', a: [2, 0], b: [2, 4], antes: 'fechada', depois: 'aberta' },
+      { id: 'L', t: 'L', a: [5, 0], b: [2, 0], valor: 1.5, rot: '1,5 H' },
+      { t: 'W', p: [[5, 0], [7, 0]] },
+      { id: 'R10', t: 'R', a: [5, 0], b: [5, 4], valor: 10, rot: '10 Ω' },
+      { id: 'I6', t: 'I', a: [7, 4], b: [7, 0], valor: 6, rot: '6 A' },
+      { t: 'W', p: [[0, 4], [7, 4]] },
+    ],
+  },
+  // P3 2026.1, 2ª questão: RLC série depois que a chave abre
+  q261b: {
+    terra: [0, 4],
+    elementos: [
+      { id: 'V30', t: 'V', a: [0, 4], b: [0, 0], valor: 30, rot: '30 V' },
+      { id: 'R10', t: 'R', a: [0, 0], b: [2, 0], valor: 10, rot: '10 Ω' },
+      { id: 'S', t: 'SW', a: [2, 0], b: [4, 0], antes: 'fechada', depois: 'aberta' },
+      { id: 'R40', t: 'R', a: [4, 0], b: [4, 4], valor: 40, rot: '40 Ω' },
+      { id: 'R60', t: 'R', a: [4, 0], b: [7, 0], valor: 60, rot: '60 Ω' },
+      { id: 'C', t: 'C', a: [7, 0], b: [7, 4], valor: 1e-3, rot: '1 mF' },
+      { id: 'L', t: 'L', a: [7, 4], b: [4, 4], valor: 2.5, rot: '2,5 H' },
+      { t: 'W', p: [[0, 4], [4, 4]] },
+    ],
+  },
+  // P3 2025.2, 1ª questão: RL com chave A→B
+  q252a: {
+    terra: [0, 4],
+    elementos: [
+      { id: 'V5', t: 'V', a: [0, 4], b: [0, 0], valor: 5, rot: '5 V' },
+      { t: 'W', p: [[0, 0], [2, 0]] },
+      { id: 'R5', t: 'R', a: [2, 0], b: [2, 4], valor: 5, rot: '5 Ω', lr: 'dir' },
+      { id: 'R1', t: 'R', a: [2, 0], b: [4, 0], valor: 1, rot: '1 Ω' },
+      { id: 'S', t: 'SPDT', c: [4.5, 1], A: [4, 0], B: [5, 0], antes: 'A', depois: 'B' },
+      { id: 'L', t: 'L', a: [4.5, 1], b: [4.5, 4], valor: 1, rot: '1 H' },
+      { id: 'R2', t: 'R', a: [5, 0], b: [8, 0], valor: 2, rot: '2 Ω' },
+      { id: 'V6', t: 'V', a: [8, 4], b: [8, 0], valor: 6, rot: '6 V' },
+      { t: 'W', p: [[0, 4], [8, 4]] },
+    ],
+  },
+  // P3 2025.2, 2ª questão: RC, chave tira um ramo
+  q252b: {
+    terra: [0, 4],
+    elementos: [
+      { id: 'V10', t: 'V', a: [0, 4], b: [0, 0], valor: 10, rot: '10 V' },
+      { id: 'R4', t: 'R', a: [0, 0], b: [3, 0], valor: 4, rot: '4 Ω' },
+      { id: 'R1', t: 'R', a: [3, 0], b: [3, 2], valor: 1, rot: '1 Ω' },
+      { id: 'S', t: 'SW', a: [3, 2], b: [3, 4], antes: 'fechada', depois: 'aberta' },
+      { id: 'R2', t: 'R', a: [3, 0], b: [6, 0], valor: 2, rot: '2 Ω' },
+      { id: 'C', t: 'C', a: [6, 0], b: [6, 4], valor: 1, rot: '1 F' },
+      { t: 'W', p: [[0, 4], [6, 4]] },
+    ],
+  },
+  // P3 2025.1, 1ª questão: RC com duas fontes
+  q251a: {
+    terra: [4, 4],
+    elementos: [
+      { id: 'V10', t: 'V', a: [0, 4], b: [0, 2], valor: 10, rot: '10 V' },
+      { id: 'R1', t: 'R', a: [0, 2], b: [2, 2], valor: 1, rot: '1 Ω' },
+      { id: 'S', t: 'SW', a: [2, 2], b: [4, 2], antes: 'fechada', depois: 'aberta' },
+      { id: 'C', t: 'C', a: [4, 2], b: [4, 4], valor: 1, rot: '1 F' },
+      { id: 'R4', t: 'R', a: [4, 2], b: [7, 2], valor: 4, rot: '4 Ω' },
+      { t: 'W', p: [[4, 2], [4, 0]] },
+      { id: 'R2', t: 'R', a: [4, 0], b: [7, 0], valor: 2, rot: '2 Ω' },
+      { t: 'W', p: [[7, 0], [7, 2]] },
+      { id: 'V3', t: 'V', a: [7, 4], b: [7, 2], valor: 3, rot: '3 V' },
+      { t: 'W', p: [[0, 4], [7, 4]] },
+    ],
+  },
+  // P3 2025.1, 2ª questão: carga do indutor, chave A→B
+  q251b: {
+    terra: [2, 4],
+    elementos: [
+      { id: 'V5', t: 'V', a: [0, 4], b: [0, 2], valor: 5, rot: '5 V' },
+      { id: 'R1a', t: 'R', a: [0, 2], b: [0, 0], valor: 1, rot: '1 Ω' },
+      { t: 'W', p: [[0, 0], [3, 0]] },
+      { id: 'V3', t: 'V', a: [2, 4], b: [2, 2], valor: 3, rot: '3 V' },
+      { t: 'W', p: [[2, 2], [2, 1], [3, 1]] },
+      { id: 'S', t: 'SPDT', c: [4, 0], A: [3, 0], B: [3, 1], antes: 'A', depois: 'B' },
+      { t: 'W', p: [[4, 0], [5, 0]] },
+      { id: 'R2', t: 'R', a: [5, 0], b: [5, 4], valor: 2, rot: '2 Ω' },
+      { id: 'R1b', t: 'R', a: [5, 0], b: [7, 0], valor: 1, rot: '1 Ω' },
+      { id: 'L', t: 'L', a: [7, 0], b: [7, 4], valor: 1, rot: '1 H' },
+      { t: 'W', p: [[0, 4], [7, 4]] },
+    ],
+  },
+  // P3 2025.1, 3ª questão: RLC série depois de A→B
+  q251c: {
+    terra: [0, 4],
+    elementos: [
+      { id: 'V100', t: 'V', a: [0, 4], b: [0, 0], valor: 100, rot: '100 V' },
+      { id: 'R10', t: 'R', a: [0, 0], b: [3, 0], valor: 10, rot: '10 Ω' },
+      { id: 'S', t: 'SPDT', c: [3.5, 1], A: [3, 0], B: [4, 0], antes: 'A', depois: 'B' },
+      { id: 'L', t: 'L', a: [3.5, 1], b: [3.5, 4], valor: 1, rot: '1 H' },
+      { id: 'C', t: 'C', a: [4, 0], b: [6, 0], valor: 1 / 9, rot: '1/9 F' },
+      { id: 'R5', t: 'R', a: [6, 0], b: [6, 4], valor: 5, rot: '5 Ω' },
+      { t: 'W', p: [[0, 4], [6, 4]] },
+    ],
+  },
+  // P3 2024.1, 1ª questão: RC com chave A→B
+  q241a: {
+    terra: [0, 4],
+    elementos: [
+      { id: 'V10', t: 'V', a: [0, 4], b: [0, 0], valor: 10, rot: '10 V' },
+      { id: 'R1', t: 'R', a: [0, 0], b: [2, 0], valor: 1, rot: '1 Ω' },
+      { id: 'R4', t: 'R', a: [2, 0], b: [2, 4], valor: 4, rot: '4 Ω' },
+      { t: 'W', p: [[2, 0], [3, 0]] },
+      { id: 'S', t: 'SPDT', c: [3.5, 1], A: [3, 0], B: [4, 0], antes: 'A', depois: 'B' },
+      { id: 'C', t: 'C', a: [3.5, 1], b: [3.5, 4], valor: 1e-3, rot: '1 mF' },
+      { id: 'R2', t: 'R', a: [4, 0], b: [6, 0], valor: 2, rot: '2 Ω' },
+      { id: 'V6', t: 'V', a: [6, 4], b: [6, 0], valor: 6, rot: '6 V' },
+      { t: 'W', p: [[0, 4], [6, 4]] },
+    ],
+  },
+  // P3 2024.1, 2ª questão: carga do indutor (Thévenin)
+  q241b: {
+    terra: [0, 4],
+    elementos: [
+      { id: 'V18', t: 'V', a: [0, 4], b: [0, 0], valor: 18, rot: '18 V' },
+      { id: 'R6', t: 'R', a: [0, 0], b: [2, 0], valor: 6, rot: '6 Ω' },
+      { id: 'S', t: 'SW', a: [2, 0], b: [4, 0], antes: 'aberta', depois: 'fechada' },
+      { id: 'R3', t: 'R', a: [4, 0], b: [4, 4], valor: 3, rot: '3 Ω' },
+      { id: 'R4', t: 'R', a: [4, 0], b: [6, 0], valor: 4, rot: '4 Ω' },
+      { id: 'L', t: 'L', a: [6, 0], b: [6, 4], valor: 1.5, rot: '3/2 H' },
+      { t: 'W', p: [[0, 4], [6, 4]] },
+    ],
+  },
+  // P3 2024.2, 1ª questão: RL com indutor em paralelo com 3 Ω
+  q242a: {
+    terra: [4, 4],
+    elementos: [
+      { id: 'V10', t: 'V', a: [0, 4], b: [0, 2], valor: 10, rot: '10 V' },
+      { id: 'R1', t: 'R', a: [0, 2], b: [2, 2], valor: 1, rot: '1 Ω' },
+      { id: 'S', t: 'SW', a: [2, 2], b: [4, 2], antes: 'fechada', depois: 'aberta' },
+      { id: 'R2', t: 'R', a: [4, 2], b: [4, 4], valor: 2, rot: '2 Ω' },
+      { id: 'L', t: 'L', a: [4, 2], b: [7, 2], valor: 1, rot: '1 H' },
+      { t: 'W', p: [[4, 2], [4, 0]] },
+      { id: 'R3', t: 'R', a: [7, 0], b: [4, 0], valor: 3, rot: '3 Ω' },
+      { t: 'W', p: [[7, 0], [7, 2]] },
+      { id: 'V2', t: 'V', a: [7, 4], b: [7, 2], valor: 2, rot: '2 V' },
+      { t: 'W', p: [[0, 4], [7, 4]] },
+    ],
+  },
+  // P3 2024.2, 2ª questão: carga do capacitor, chave A→B
+  q242b: {
+    terra: [2, 4],
+    elementos: [
+      { id: 'V12', t: 'V', a: [0, 4], b: [0, 2], valor: 12, rot: '12 V' },
+      { id: 'R3', t: 'R', a: [0, 2], b: [0, 0], valor: 3, rot: '3 Ω' },
+      { t: 'W', p: [[0, 0], [3, 0]] },
+      { id: 'V4', t: 'V', a: [2, 4], b: [2, 2], valor: 4, rot: '4 V' },
+      { t: 'W', p: [[2, 2], [2, 1], [3, 1]] },
+      { id: 'S', t: 'SPDT', c: [4, 0], A: [3, 0], B: [3, 1], antes: 'A', depois: 'B' },
+      { id: 'R2', t: 'R', a: [4, 0], b: [6, 0], valor: 2, rot: '2 Ω' },
+      { id: 'C', t: 'C', a: [6, 0], b: [6, 4], valor: 3, rot: '3 F' },
+      { t: 'W', p: [[0, 4], [6, 4]] },
+    ],
+  },
+};
+if (typeof module !== 'undefined') module.exports = CIRCUITOS;
+
+/* ---------- As provas resolvidas ----------
+   Os números das respostas são calculados pelo MOTOR a partir do circuito,
+   e os textos explicam o raciocínio. Os dois foram conferidos entre si. */
+const T = String.raw;
+const med = (fase, el, q) => c => MOTOR.medir(c.res[fase], { el, q });
+const der = (el, q) => c => MOTOR.derivada(c.res, { el, q });
+const TAU = c => c.res.tau;
+const ALFA = c => c.res.alfa, W0 = c => c.res.w0;
+const sol2 = (el, q) => c => MOTOR.solucao2(c.res.alfa, c.res.w0, MOTOR.medir(c.res.final, { el, q }), MOTOR.medir(c.res.inicial, { el, q }), MOTOR.derivada(c.res, { el, q }));
+const edoSol = c => MOTOR.solucao2(c.edo.a / 2, Math.sqrt(c.edo.b), c.edo.K / c.edo.b, c.edo.x0, c.edo.dx0);
+const AMORT = ['Supercrítico', 'Crítico', 'Subamortecido'];
+const idxAmort = tipo => ({ super: 0, critico: 1, sub: 2 })[tipo];
+
+/* Itens de expressão de 1ª ordem: x(t) = A + B·e^(−t/τ) */
+const expr1 = (el, q, nome, un) => [
+  { rot: T`${nome}(\infty)`, un, valor: med('final', el, q), dica: 'o valor final (A)' },
+  { rot: T`${nome}(0^+) - ${nome}(\infty)`, un, valor: c => MOTOR.medir(c.res.inicial, { el, q }) - MOTOR.medir(c.res.final, { el, q }), dica: 'o coeficiente da exponencial (B)' },
+  { rot: T`\tau`, un: 's', valor: TAU },
+];
+
+const PROVAS = [
+  {
+    id: '2026-1', nome: 'P3 2026.1', data: '23/06/2026',
+    questoes: [
+      {
+        n: 1, pontos: '5,0', circuito: 'q261a',
+        enunciado: T`Sabe-se que a chave do circuito abaixo encontra-se fechada por bastante tempo, sendo aberta no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'L', txt: 'i_L' }, { t: 'v', el: 'L', txt: 'v_L' }, { t: 'i', el: 'R10', txt: 'i_10' }, { t: 'v', el: 'R5', txt: 'v_5' }],
+        itens: [
+          {
+            l: 'a', pts: '0,5', txt: T`A corrente no resistor de 10 Ω ($i_{10}$) em $t = 0^-$.`,
+            campos: [{ rot: T`i_{10}(0^-)`, un: 'A', valor: med('antes', 'R10', 'i') }],
+            passos: [
+              { fase: 'antes', txt: T`Antes de $t = 0$ a chave está fechada há bastante tempo: é regime. O indutor vira **curto**, e a chave fechada liga o nó da esquerda direto na terra.` },
+              { txt: T`Com o indutor em curto, o nó da direita fica ligado ao da esquerda, que está em 0 V. O resistor de 10 Ω tem 0 V nos terminais: $i_{10}(0^-) = \frac{0}{10} = 0$. Os 6 A da fonte passam todos pelo indutor e voltam pela chave.` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`A corrente no indutor ($i_L$) no instante $t = 0^+$.`,
+            campos: [{ rot: T`i_L(0^+)`, un: 'A', valor: med('inicial', 'L', 'i') }],
+            passos: [
+              { fase: 'antes', txt: T`Na foto de $0^-$ (a mesma do item a), os 6 A da fonte atravessam o indutor da direita para a esquerda, no sentido da seta: $i_L(0^-) = 6$ A.` },
+              { txt: T`A corrente no indutor não pula: $i_L(0^+) = i_L(0^-) = 6$ A.` },
+            ],
+          },
+          {
+            l: 'c', pts: '0,5', txt: T`A tensão no resistor de 5 Ω ($v_5$) em $t = 0^+$.`,
+            campos: [{ rot: T`v_5(0^+)`, un: 'V', valor: med('inicial', 'R5', 'v') }],
+            passos: [
+              { fase: 'inicial', txt: T`Em $0^+$ a chave já abriu e o indutor vira uma **fonte de corrente de 6 A**, para a esquerda.` },
+              { txt: T`Esses 6 A chegam ao nó da esquerda e o único caminho é descer pelo 5 Ω, entrando pelo +: $v_5(0^+) = 5 \cdot 6 = 30$ V.` },
+            ],
+          },
+          {
+            l: 'd', pts: '0,5', txt: T`A tensão no indutor ($v_L$) no instante $t = 0^+$.`,
+            campos: [{ rot: T`v_L(0^+)`, un: 'V', valor: med('inicial', 'L', 'v') }],
+            passos: [
+              { fase: 'inicial', txt: T`LCK no nó da direita: a fonte entrega 6 A e o indutor leva 6 A. Sobra $i_{10} = 6 - 6 = 0$, então esse nó está em $10 \cdot 0 = 0$ V.` },
+              { txt: T`O nó da esquerda está em $v_5 = 30$ V. Pela polaridade do desenho (+ à direita): $v_L = v_{dir} - v_{esq} = 0 - 30 = -30$ V.` },
+              { txt: T`Faz sentido: $v_L = L\frac{di_L}{dt} < 0$ quer dizer que a corrente no indutor vai começar a **cair**.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,5', txt: T`A constante de tempo $\tau$ para $t > 0$.`,
+            campos: [{ rot: T`\tau`, un: 's', valor: TAU }],
+            passos: [
+              { fase: 'tau', txt: T`Circuito de $t > 0$ (chave aberta), sem o indutor e com a fonte zerada: fonte de corrente vira **circuito aberto**.` },
+              { txt: T`Dos terminais do indutor: entra pelo 10 Ω, desce até a terra e volta pelo 5 Ω. Os dois estão em **série**: $R_{eq} = 10 + 5 = 15\ \Omega$.` },
+              { txt: T`$\tau = \frac{L}{R_{eq}} = \frac{1{,}5}{15} = 0{,}1$ s.` },
+            ],
+          },
+          {
+            l: 'f', pts: '0,5', txt: T`A corrente no indutor ($i_L$) para $t \to +\infty$.`,
+            campos: [{ rot: T`i_L(\infty)`, un: 'A', valor: med('final', 'L', 'i') }],
+            passos: [
+              { fase: 'final', txt: T`Muito tempo depois, o indutor é curto de novo. Os 6 A se dividem entre o 10 Ω e o ramo do indutor com o 5 Ω.` },
+              { txt: T`Divisor de corrente (em cima vai o resistor do **outro** ramo): $i_L(\infty) = 6 \cdot \frac{10}{10 + 5} = 4$ A.` },
+            ],
+          },
+          {
+            l: 'g', pts: '1,0', txt: T`A expressão da corrente no indutor ($i_L$) para $t \geq 0$.`,
+            campos: expr1('L', 'i', 'i_L', 'A'),
+            passos: [
+              { txt: T`Fórmula da 1ª ordem: $i_L(t) = i_L(\infty) + [i_L(0^+) - i_L(\infty)]\,e^{-t/\tau}$.` },
+              { txt: T`Com os itens anteriores: $i_L(t) = 4 + (6 - 4)\,e^{-t/0{,}1} = 4 + 2\,e^{-10t}$ A, para $t \geq 0$.` },
+            ],
+          },
+          {
+            l: 'h', pts: '1,0', txt: T`Esboce o gráfico da corrente no indutor ($i_L$) para $t \geq 0$.`,
+            grafico: { el: 'L', q: 'i', nome: 'i_L', un: 'A' },
+            passos: [
+              { txt: T`A curva começa em 6 A em $t = 0$, cai exponencialmente e se aproxima da assíntota de 4 A.` },
+              { txt: T`Em $t = \tau = 0{,}1$ s ela já fez 63% do caminho: $4 + 2e^{-1} \approx 4{,}74$ A. Em $5\tau = 0{,}5$ s praticamente chegou. Marque no esboço: 6 A, a assíntota tracejada em 4 A e o $\tau$.` },
+            ],
+          },
+        ],
+      },
+      {
+        n: 2, pontos: '5,0', circuito: 'q261b', ordem: 2,
+        enunciado: T`No circuito a seguir há dois elementos armazenadores de energia, caracterizando um circuito de segunda ordem. A chave encontra-se fechada por bastante tempo e foi aberta no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'L', txt: 'i' }, { t: 'v', el: 'C', txt: 'v' }],
+        itens: [
+          {
+            l: 'a', pts: '1,25', txt: T`Calcule $i(0^+)$ e $v(0^+)$.`,
+            campos: [{ rot: T`i(0^+)`, un: 'A', valor: med('inicial', 'L', 'i') }, { rot: T`v(0^+)`, un: 'V', valor: med('inicial', 'C', 'v') }],
+            passos: [
+              { fase: 'antes', txt: T`Antes de $t = 0$, regime: capacitor **aberto** e indutor **curto**. O indutor está em série com o capacitor aberto, então nele não passa corrente: $i(0^-) = 0$.` },
+              { txt: T`A corrente da fonte é $\frac{30}{10 + 40} = 0{,}6$ A, e o 40 Ω fica com $40 \cdot 0{,}6 = 24$ V. No 60 Ω não passa corrente e o indutor em curto tem 0 V, então o capacitor fica com a mesma tensão do 40 Ω: $v(0^-) = 24$ V.` },
+              { txt: T`Continuidade: $i(0^+) = i(0^-) = 0$ e $v(0^+) = v(0^-) = 24$ V.` },
+            ],
+          },
+          {
+            l: 'b', pts: '1,25', txt: T`Calcule $\dfrac{di}{dt}(0^+)$.`,
+            campos: [{ rot: T`\frac{di}{dt}(0^+)`, un: 'A/s', valor: der('L', 'i') }],
+            passos: [
+              { txt: T`A derivada da corrente no indutor sai da tensão nele: $\frac{di}{dt}(0^+) = \frac{v_L(0^+)}{L}$.` },
+              { fase: 'inicial', txt: T`Em $0^+$ a chave abriu e sobra uma malha só: 60 Ω, capacitor (fonte de 24 V), indutor (fonte de 0 A) e 40 Ω, todos em série.` },
+              { txt: T`LTK seguindo $i$ (sentido horário): $60\,i + v + v_L + 40\,i = 0$. Com $i = 0$: $v_L(0^+) = -v(0^+) = -24$ V.` },
+              { txt: T`$\frac{di}{dt}(0^+) = \frac{-24}{2{,}5} = -9{,}6$ A/s.` },
+            ],
+          },
+          {
+            l: 'c', pts: '1,25', txt: T`Caracterize a resposta natural de $i(t)$ para $t > 0$ (amortecimento supercrítico, crítico ou subamortecimento).`,
+            escolha: { opcoes: AMORT, certa: c => idxAmort(MOTOR.amortecimento(c.res.alfa, c.res.w0).tipo) },
+            campos: [{ rot: T`\alpha`, un: '1/s', valor: ALFA }, { rot: T`\omega_0`, un: 'rad/s', valor: W0 }],
+            passos: [
+              { fase: 'depois', txt: T`Para $t > 0$ o circuito é um **RLC série**: $R = 40 + 60 = 100\ \Omega$, $L = 2{,}5$ H e $C = 1$ mF.` },
+              { txt: T`$\alpha = \frac{R}{2L} = \frac{100}{5} = 20\ \text{s}^{-1}$ e $\omega_0 = \frac{1}{\sqrt{LC}} = \frac{1}{\sqrt{2{,}5 \cdot 10^{-3}}} = \frac{1}{0{,}05} = 20$ rad/s.` },
+              { txt: T`$\alpha = \omega_0$: **amortecimento crítico**. Raiz dupla $s = -20$, e a resposta natural tem a forma $(A_1 + A_2 t)\,e^{-20t}$.` },
+            ],
+          },
+          {
+            l: 'd', pts: '1,25', txt: T`Obtenha a solução geral de $i(t)$ para $t > 0$.`,
+            campos: [{ rot: 'A_1', un: 'A', valor: c => sol2('L', 'i')(c).A1 }, { rot: 'A_2', un: 'A/s', valor: c => sol2('L', 'i')(c).A2 }],
+            forma: T`i(t) = (A_1 + A_2\,t)\,e^{-20t}`,
+            grafico2: { el: 'L', q: 'i', nome: 'i', un: 'A' },
+            passos: [
+              { txt: T`Para $t > 0$ não há fonte: a resposta forçada é zero. Forma do crítico: $i(t) = (A_1 + A_2 t)\,e^{-20t}$.` },
+              { txt: T`$i(0^+) = A_1 = 0$.` },
+              { txt: T`Derivando: $i'(t) = A_2 e^{-20t} - 20(A_1 + A_2 t)e^{-20t}$, então $i'(0^+) = A_2 - 20A_1 = A_2 = -9{,}6$.` },
+              { txt: T`$i(t) = -9{,}6\,t\,e^{-20t}$ A, para $t > 0$. A corrente fica negativa (anti-horária: o capacitor descarregando), chega no mínimo em $t = \frac{1}{20}$ s e volta a zero.` },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: '2025-2', nome: 'P3 2025.2', data: '02/12/2025',
+    questoes: [
+      {
+        n: 1, pontos: '3,5', circuito: 'q252a',
+        enunciado: T`No circuito a seguir, a chave encontra-se na posição $A$ durante bastante tempo e muda para a posição $B$ no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'L', txt: 'i_L' }, { t: 'v', el: 'L', txt: 'v_L' }, { t: 'i', el: 'V5', txt: 'i_F' }, { t: 'i', el: 'R2', txt: 'i_2' }],
+        itens: [
+          {
+            l: 'a', pts: '0,7', txt: T`A corrente no indutor ($i_L$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_L(0^-)`, un: 'A', valor: med('antes', 'L', 'i') }],
+            passos: [
+              { fase: 'antes', txt: T`Chave em A há bastante tempo: o indutor é **curto** e liga no nó de 5 V pelo resistor de 1 Ω.` },
+              { txt: T`O nó de cima à esquerda está preso em 5 V pela fonte. A corrente no 1 Ω é a do indutor: $i_L(0^-) = \frac{5 - 0}{1} = 5$ A.` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,7', txt: T`A corrente na fonte ($i_F$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_F(0^-)`, un: 'A', valor: med('antes', 'V5', 'i') }],
+            passos: [
+              { fase: 'antes', txt: T`A fonte alimenta dois ramos em paralelo: o 5 Ω, com $\frac{5}{5} = 1$ A, e o ramo do 1 Ω com o indutor, com 5 A.` },
+              { txt: T`LCK: $i_F(0^-) = 1 + 5 = 6$ A.` },
+            ],
+          },
+          {
+            l: 'c', pts: '0,7', txt: T`A tensão no indutor ($v_L$) no instante $t = 0^+$.`,
+            campos: [{ rot: T`v_L(0^+)`, un: 'V', valor: med('inicial', 'L', 'v') }],
+            passos: [
+              { fase: 'inicial', txt: T`Em $t = 0$ a chave vai para B. O indutor vira **fonte de corrente de 5 A** (para baixo), agora ligado ao 2 Ω e à fonte de 6 V.` },
+              { txt: T`Esses 5 A vêm da fonte de 6 V pelo 2 Ω. LTK na malha: $6 = 2 \cdot 5 + v_L$.` },
+              { txt: T`$v_L(0^+) = 6 - 10 = -4$ V. Negativo: a corrente no indutor vai cair.` },
+            ],
+          },
+          {
+            l: 'd', pts: '0,7', txt: T`A corrente no resistor de 2 Ω ($i_2$) em $t \to +\infty$.`,
+            campos: [{ rot: T`i_2(\infty)`, un: 'A', valor: med('final', 'R2', 'i') }],
+            passos: [
+              { fase: 'final', txt: T`Muito depois, o indutor é curto. A fonte de 6 V fica só com o 2 Ω: passam $\frac{6}{2} = 3$ A, saindo do + da fonte e atravessando o 2 Ω da direita para a esquerda.` },
+              { txt: T`A seta de $i_2$ aponta para a direita, **contra** essa corrente: $i_2(\infty) = -3$ A.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,7', txt: T`Esboce o gráfico da corrente no indutor ($i_L$) para $t > 0$.`,
+            grafico: { el: 'L', q: 'i', nome: 'i_L', un: 'A' },
+            passos: [
+              { fase: 'tau', txt: T`Falta o $\tau$: com a fonte zerada, o indutor enxerga só o 2 Ω. $\tau = \frac{L}{R} = \frac{1}{2} = 0{,}5$ s.` },
+              { txt: T`$i_L(t) = 3 + (5 - 3)e^{-t/0{,}5} = 3 + 2e^{-2t}$ A: começa em 5 A e cai até a assíntota de 3 A.` },
+            ],
+          },
+        ],
+      },
+      {
+        n: 2, pontos: '3,5', circuito: 'q252b',
+        enunciado: T`Sabe-se que a chave do circuito abaixo encontra-se fechada por bastante tempo, sendo aberta no instante $t = 0$.`,
+        anot: [{ t: 'v', el: 'R4', txt: 'v_4' }, { t: 'i', el: 'C', txt: 'i_c' }, { t: 'v', el: 'C', txt: 'v_c' }],
+        itens: [
+          {
+            l: 'a', pts: '0,5', txt: T`A tensão no capacitor ($v_c$) para $t = 0$.`,
+            campos: [{ rot: T`v_c(0)`, un: 'V', valor: med('antes', 'C', 'v') }],
+            passos: [
+              { fase: 'antes', txt: T`Chave fechada há bastante tempo: capacitor **aberto**. A corrente vai da fonte pelo 4 Ω e desce pelo 1 Ω e pela chave: $\frac{10}{4 + 1} = 2$ A.` },
+              { txt: T`No 2 Ω não passa corrente, então o capacitor tem a mesma tensão do 1 Ω: $v_c(0) = 1 \cdot 2 = 2$ V.` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`A tensão no capacitor ($v_c$) para $t \to +\infty$.`,
+            campos: [{ rot: T`v_c(\infty)`, un: 'V', valor: med('final', 'C', 'v') }],
+            passos: [
+              { fase: 'final', txt: T`Com a chave aberta, o 1 Ω sai do circuito. Em regime o capacitor é aberto: ninguém conduz e nenhum resistor tem queda. $v_c(\infty) = 10$ V.` },
+            ],
+          },
+          {
+            l: 'c', pts: '0,5', txt: T`A constante de tempo $\tau$ para $t > 0$.`,
+            campos: [{ rot: T`\tau`, un: 's', valor: TAU }],
+            passos: [
+              { fase: 'tau', txt: T`Fonte zerada (fio): o capacitor vê o 2 Ω em série com o 4 Ω. $R_{eq} = 6\ \Omega$ e $\tau = R_{eq}C = 6 \cdot 1 = 6$ s.` },
+            ],
+          },
+          {
+            l: 'd', pts: '0,5', txt: T`A expressão da tensão $v_c(t)$ para $t > 0$.`,
+            campos: expr1('C', 'v', 'v_c', 'V'),
+            passos: [
+              { txt: T`$v_c(t) = 10 + (2 - 10)\,e^{-t/6} = 10 - 8\,e^{-t/6}$ V.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,5', txt: T`A expressão da corrente $i_c(t)$ para $t > 0$.`,
+            campos: expr1('C', 'i', 'i_c', 'A'),
+            passos: [
+              { txt: T`Derivando: $i_c = C\frac{dv_c}{dt} = 1 \cdot \frac{8}{6}\,e^{-t/6} = \frac{4}{3}\,e^{-t/6} \approx 1{,}33\,e^{-t/6}$ A.` },
+              { fase: 'inicial', txt: T`Conferindo pela foto de $0^+$: $i_c(0^+) = \frac{10 - 2}{4 + 2} = \frac{4}{3}$ A, e $i_c(\infty) = 0$. A fórmula da 1ª ordem dá o mesmo resultado.` },
+            ],
+          },
+          {
+            l: 'f', pts: '0,5', txt: T`A expressão de $v_4(t)$ para $t > 0$.`,
+            campos: expr1('R4', 'v', 'v_4', 'V'),
+            passos: [
+              { txt: T`Para $t > 0$ o 4 Ω está em série com o capacitor, com a mesma corrente $i_c$: $v_4(t) = 4\,i_c(t) = \frac{16}{3}\,e^{-t/6} \approx 5{,}33\,e^{-t/6}$ V.` },
+            ],
+          },
+          {
+            l: 'g', pts: '0,5', txt: T`Responda: a tensão $v_4(0^-) = v_4(0^+)$? Justifique.`,
+            escolha: { opcoes: ['Sim', 'Não'], certa: 1 },
+            passos: [
+              { fase: 'antes', txt: T`Em $0^-$ passam 2 A pelo 4 Ω: $v_4(0^-) = 4 \cdot 2 = 8$ V.` },
+              { fase: 'inicial', txt: T`Em $0^+$: $v_4(0^+) = \frac{16}{3} \approx 5{,}33$ V.` },
+              { txt: T`**Não.** A tensão num resistor pode variar instantaneamente. Só a tensão no capacitor (e a corrente no indutor) é obrigada a ser contínua.` },
+            ],
+          },
+        ],
+      },
+      {
+        n: 3, pontos: '3,0', edo: { a: 2, b: 5, K: 10, x0: 4, dx0: -2, nome: 'i', un: 'A' },
+        enunciado: T`A corrente em um indutor em um circuito de segunda ordem pode ser calculada pela expressão $\dfrac{d^2i}{dt^2} + 2\dfrac{di}{dt} + 5i = 10$, com $i(0) = 4$ A e $\dfrac{di}{dt}(0) = -2$ A/s.`,
+        itens: [
+          {
+            l: 'a', pts: '1,25', txt: T`Obtenha a resposta natural de $i(t)$ para $t > 0$ (amortecimento supercrítico, crítico ou subamortecimento).`,
+            escolha: { opcoes: AMORT, certa: 2 },
+            campos: [{ rot: T`\alpha`, un: '1/s', valor: 1 }, { rot: T`\omega_d`, un: 'rad/s', valor: 2 }],
+            passos: [
+              { txt: T`Equação característica: $s^2 + 2s + 5 = 0$. Daí $\alpha = \frac{2}{2} = 1$ e $\omega_0 = \sqrt{5} \approx 2{,}24$.` },
+              { txt: T`$\alpha < \omega_0$: **subamortecido**. Raízes: $s = -1 \pm \sqrt{1 - 5} = -1 \pm j2$, ou seja, $\omega_d = 2$ rad/s.` },
+              { txt: T`Resposta natural: $i_n(t) = e^{-t}\,(B_1\cos 2t + B_2\sin 2t)$.` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`Obtenha a resposta forçada de $i(t)$ para $t > 0$.`,
+            campos: [{ rot: T`i_f`, un: 'A', valor: 2 }],
+            passos: [
+              { txt: T`A "fonte" (lado direito) é constante, então a resposta forçada também é. Derivadas de constante são zero: $5\,i_f = 10 \Rightarrow i_f = 2$ A.` },
+            ],
+          },
+          {
+            l: 'c', pts: '1,25', txt: T`Obtenha a solução geral de $i(t)$ para $t > 0$.`,
+            campos: [{ rot: 'B_1', un: 'A', valor: c => edoSol(c).B1 }, { rot: 'B_2', un: 'A', valor: c => edoSol(c).B2 }],
+            forma: T`i(t) = 2 + e^{-t}\,(B_1\cos 2t + B_2\sin 2t)`,
+            graficoEdo: true,
+            passos: [
+              { txt: T`$i(t) = 2 + e^{-t}(B_1\cos 2t + B_2\sin 2t)$. Em $t = 0$: $4 = 2 + B_1 \Rightarrow B_1 = 2$.` },
+              { txt: T`Derivada em 0 (tabela da etapa 8): $i'(0) = -\alpha B_1 + \omega_d B_2 = -2 + 2B_2 = -2 \Rightarrow B_2 = 0$.` },
+              { txt: T`$i(t) = 2 + 2\,e^{-t}\cos(2t)$ A.` },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: '2025-1', nome: 'P3 2025.1', data: '07/07/2025',
+    questoes: [
+      {
+        n: 1, pontos: '3,0', circuito: 'q251a',
+        enunciado: T`No circuito a seguir, a chave encontra-se fechada durante bastante tempo e é aberta no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'R2', txt: 'i_2' }, { t: 'i', el: 'C', txt: 'i_c' }, { t: 'v', el: 'C', txt: 'v_c' }],
+        itens: [
+          {
+            l: 'a', pts: '0,5', txt: T`A corrente que percorre o resistor de 2 Ω ($i_2$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_2(0^-)`, un: 'A', valor: med('antes', 'R2', 'i') }],
+            passos: [
+              { fase: 'antes', txt: T`Chave fechada há bastante tempo, capacitor **aberto**. Sobra um nó desconhecido: o nó P, em cima do capacitor. Entre P e a fonte de 3 V, o 2 Ω e o 4 Ω estão em paralelo.` },
+              { txt: T`Análise nodal em P: $\frac{10 - v_P}{1} = \frac{v_P - 3}{2} + \frac{v_P - 3}{4}$.` },
+              { txt: T`Multiplicando por 4: $40 - 4v_P = 3v_P - 9 \Rightarrow v_P = 7$ V.` },
+              { txt: T`$i_2(0^-) = \frac{7 - 3}{2} = 2$ A.` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`A tensão no capacitor ($v_c$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`v_c(0^-)`, un: 'V', valor: med('antes', 'C', 'v') }],
+            passos: [{ fase: 'antes', txt: T`O capacitor está entre P e a terra: $v_c(0^-) = v_P = 7$ V.` }],
+          },
+          {
+            l: 'c', pts: '0,5', txt: T`A corrente no capacitor ($i_c$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_c(0^-)`, un: 'A', valor: med('antes', 'C', 'i') }],
+            passos: [{ txt: T`Em regime o capacitor é circuito aberto: $i_c(0^-) = 0$.` }],
+          },
+          {
+            l: 'd', pts: '0,5', txt: T`A corrente no capacitor ($i_c$) no instante $t = 0^+$.`,
+            campos: [{ rot: T`i_c(0^+)`, un: 'A', valor: med('inicial', 'C', 'i') }],
+            passos: [
+              { fase: 'inicial', txt: T`A chave abriu: a fonte de 10 V e o 1 Ω saem. O capacitor vira **fonte de 7 V**, ligada à fonte de 3 V pelos resistores de 2 Ω e 4 Ω.` },
+              { txt: T`Saem de P: $\frac{7 - 3}{2} = 2$ A pelo 2 Ω e $\frac{7 - 3}{4} = 1$ A pelo 4 Ω. Essa corrente sai do capacitor (sobe por ele).` },
+              { txt: T`A seta de $i_c$ aponta para baixo: $i_c(0^+) = -(2 + 1) = -3$ A. O capacitor está **descarregando**.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,5', txt: T`A corrente que percorre o resistor de 2 Ω ($i_2$) no instante $t = 0^+$.`,
+            campos: [{ rot: T`i_2(0^+)`, un: 'A', valor: med('inicial', 'R2', 'i') }],
+            passos: [
+              { fase: 'inicial', txt: T`Do item anterior: $i_2(0^+) = \frac{7 - 3}{2} = 2$ A.` },
+              { txt: T`Igual ao de $0^-$! Não é regra: aconteceu porque as duas pontas do 2 Ω continuam com as mesmas tensões (7 V do capacitor, que não pula, e 3 V da fonte).` },
+            ],
+          },
+          {
+            l: 'f', pts: '0,5', txt: T`A tensão no capacitor ($v_c$) em $t \to +\infty$.`,
+            campos: [{ rot: T`v_c(\infty)`, un: 'V', valor: med('final', 'C', 'v') }],
+            passos: [{ fase: 'final', txt: T`Muito tempo depois, o capacitor é aberto e não passa corrente nos resistores: P fica com a tensão da fonte, $v_c(\infty) = 3$ V.` }],
+          },
+        ],
+      },
+      {
+        n: 2, pontos: '3,5', circuito: 'q251b',
+        enunciado: T`A figura exibe um circuito para carregar um indutor de 1 H. O indutor se encontra inicialmente carregado (com a chave em $A$ há bastante tempo) e a chave é comutada para a posição $B$ no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'L', txt: 'i' }, { t: 'v', el: 'L', txt: 'v' }],
+        itens: [
+          {
+            l: 'a', pts: '0,7', txt: T`A corrente no indutor ($i$) no instante $t = 0^+$.`,
+            campos: [{ rot: T`i(0^+)`, un: 'A', valor: med('inicial', 'L', 'i') }],
+            passos: [
+              { fase: 'antes', txt: T`Antes de $t = 0$, chave em A há bastante tempo: indutor em **curto**.` },
+              { txt: T`Do nó S para a terra há dois caminhos: o 2 Ω e o 1 Ω com o indutor em curto. Paralelo: $\frac{2 \cdot 1}{2 + 1} = \frac{2}{3}\ \Omega$. Com o 1 Ω da fonte: $1 + \frac{2}{3} = \frac{5}{3}\ \Omega$.` },
+              { txt: T`Corrente da fonte: $\frac{5}{5/3} = 3$ A. Tensão em S: $3 \cdot \frac{2}{3} = 2$ V. Corrente no indutor: $\frac{2}{1} = 2$ A.` },
+              { txt: T`Continuidade: $i(0^+) = i(0^-) = 2$ A.` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,7', txt: T`A corrente no indutor ($i$) para $t \to +\infty$.`,
+            campos: [{ rot: T`i(\infty)`, un: 'A', valor: med('final', 'L', 'i') }],
+            passos: [{ fase: 'final', txt: T`Em B, a fonte de 3 V fica direto no nó S. Indutor em curto: $i(\infty) = \frac{3}{1} = 3$ A. O 2 Ω fica em paralelo com a fonte e não muda nada para o indutor.` }],
+          },
+          {
+            l: 'c', pts: '0,7', txt: T`A constante de tempo $\tau$ do carregamento do indutor para $t > 0$.`,
+            campos: [{ rot: T`\tau`, un: 's', valor: TAU }],
+            passos: [
+              { fase: 'tau', txt: T`Zerando a fonte de 3 V (vira fio), o nó S vai para a terra. O 2 Ω fica com os dois terminais na terra e não conduz. O indutor enxerga só o 1 Ω.` },
+              { txt: T`$\tau = \frac{L}{R_{eq}} = \frac{1}{1} = 1$ s.` },
+            ],
+          },
+          {
+            l: 'd', pts: '0,7', txt: T`A expressão da corrente $i(t)$ para todo $t > 0$.`,
+            campos: expr1('L', 'i', 'i', 'A'),
+            passos: [{ txt: T`$i(t) = 3 + (2 - 3)\,e^{-t/1} = 3 - e^{-t}$ A.` }],
+          },
+          {
+            l: 'e', pts: '0,7', txt: T`Esboce o gráfico da corrente $i(t)$ para $t > 0$.`,
+            grafico: { el: 'L', q: 'i', nome: 'i', un: 'A' },
+            passos: [{ txt: T`Começa em 2 A, sobe e se aproxima da assíntota de 3 A. Em $t = \tau = 1$ s: $3 - e^{-1} \approx 2{,}63$ A.` }],
+          },
+        ],
+      },
+      {
+        n: 3, pontos: '3,5', circuito: 'q251c', ordem: 2,
+        enunciado: T`A chave do circuito a seguir permaneceu na posição $A$ durante um longo tempo e foi comutada para a posição $B$ no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'L', txt: 'i' }, { t: 'v', el: 'C', txt: 'v', lado: 'baixo' }],
+        itens: [
+          {
+            l: 'a', pts: '1,0', txt: T`Calcule $i(0^+)$ e $v(0^+)$.`,
+            campos: [{ rot: T`i(0^+)`, un: 'A', valor: med('inicial', 'L', 'i') }, { rot: T`v(0^+)`, un: 'V', valor: med('inicial', 'C', 'v') }],
+            passos: [
+              { fase: 'antes', txt: T`Chave em A há bastante tempo: indutor em curto, ligado à fonte pelo 10 Ω: $i(0^-) = \frac{100}{10} = 10$ A.` },
+              { txt: T`E o capacitor? Com a chave em A, o terminal B não está ligado em nada: o ramo do capacitor fica **aberto** e nunca passou corrente por ele. Ele está descarregado: $v(0^-) = 0$.` },
+              { txt: T`Continuidade: $i(0^+) = 10$ A e $v(0^+) = 0$ V.` },
+            ],
+          },
+          {
+            l: 'b', pts: '1,0', txt: T`Calcule $\dfrac{di}{dt}(0^+)$.`,
+            campos: [{ rot: T`\frac{di}{dt}(0^+)`, un: 'A/s', valor: der('L', 'i') }],
+            passos: [
+              { fase: 'inicial', txt: T`Em B forma-se a malha indutor, capacitor e 5 Ω. Em $0^+$: o indutor é fonte de 10 A e o capacitor, fonte de 0 V.` },
+              { txt: T`Seguindo $i$ (desce pelo indutor, volta pela terra, sobe pelo 5 Ω e atravessa o capacitor de − para +), a LTK fica: $v_L + 5\,i - v = 0$.` },
+              { txt: T`$v_L(0^+) = v(0^+) - 5\,i(0^+) = 0 - 50 = -50$ V, então $\frac{di}{dt}(0^+) = \frac{v_L}{L} = \frac{-50}{1} = -50$ A/s.` },
+            ],
+          },
+          {
+            l: 'c', pts: '1,5', txt: T`Caracterize a resposta natural de $i(t)$ para $t > 0$ (amortecimento supercrítico, crítico ou subamortecimento).`,
+            escolha: { opcoes: AMORT, certa: c => idxAmort(MOTOR.amortecimento(c.res.alfa, c.res.w0).tipo) },
+            campos: [{ rot: T`\alpha`, un: '1/s', valor: ALFA }, { rot: T`\omega_0`, un: 'rad/s', valor: W0 }],
+            grafico2: { el: 'L', q: 'i', nome: 'i', un: 'A' },
+            passos: [
+              { fase: 'depois', txt: T`Para $t > 0$: RLC série com $R = 5\ \Omega$, $L = 1$ H e $C = \frac{1}{9}$ F.` },
+              { txt: T`$\alpha = \frac{5}{2 \cdot 1} = 2{,}5\ \text{s}^{-1}$ e $\omega_0 = \frac{1}{\sqrt{1 \cdot 1/9}} = 3$ rad/s.` },
+              { txt: T`$\alpha < \omega_0$: **subamortecido**, com $\omega_d = \sqrt{9 - 6{,}25} \approx 1{,}66$ rad/s. Resposta natural: $e^{-2{,}5t}(B_1\cos 1{,}66t + B_2\sin 1{,}66t)$.` },
+              { txt: T`Não foi pedido, mas dá para fechar: $B_1 = 10$ e $-2{,}5 \cdot 10 + 1{,}66\,B_2 = -50 \Rightarrow B_2 \approx -15{,}08$. Veja o gráfico.` },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: '2024-2', nome: 'P3 2024.2', data: '20/01/2025',
+    questoes: [
+      {
+        n: 1, pontos: '3,5', circuito: 'q242a',
+        enunciado: T`No circuito a seguir, a chave encontra-se fechada durante bastante tempo, até ser aberta no instante $t = 0$.`,
+        anot: [{ t: 'v', el: 'R2', txt: 'v_2' }, { t: 'i', el: 'R3', txt: 'i_3', lado: 'cima' }, { t: 'i', el: 'L', txt: 'i_L' }],
+        itens: [
+          {
+            l: 'a', pts: '0,5', txt: T`A tensão $v_2$ no instante $t = 0^-$.`,
+            campos: [{ rot: T`v_2(0^-)`, un: 'V', valor: med('antes', 'R2', 'v') }],
+            passos: [{ fase: 'antes', txt: T`Chave fechada há bastante tempo: indutor em **curto**. Ele liga o nó P direto no nó da fonte de 2 V. Então $v_P = 2$ V e $v_2(0^-) = 2$ V.` }],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`A corrente $i_3$ no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_3(0^-)`, un: 'A', valor: med('antes', 'R3', 'i') }],
+            passos: [{ fase: 'antes', txt: T`O 3 Ω está em paralelo com o indutor em curto: 0 V nos terminais, $i_3(0^-) = 0$.` }],
+          },
+          {
+            l: 'c', pts: '0,75', txt: T`A corrente no indutor ($i_L$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_L(0^-)`, un: 'A', valor: med('antes', 'L', 'i') }],
+            passos: [{ fase: 'antes', txt: T`LCK em P: chegam $\frac{10 - 2}{1} = 8$ A pelo 1 Ω, descem $\frac{2}{2} = 1$ A pelo 2 Ω, e o resto segue pelo indutor: $i_L(0^-) = 8 - 1 = 7$ A.` }],
+          },
+          {
+            l: 'd', pts: '0,75', txt: T`A corrente $i_3$ no instante $t = 0^+$.`,
+            campos: [{ rot: T`i_3(0^+)`, un: 'A', valor: med('inicial', 'R3', 'i') }],
+            passos: [
+              { fase: 'inicial', txt: T`A chave abriu: o 10 V e o 1 Ω saem. O indutor vira fonte de 7 A, de P para a direita. Em P sobram: o 2 Ω para a terra, a fonte de 7 A saindo e o 3 Ω chegando da fonte de 2 V.` },
+              { txt: T`LCK em P: $i_3 = 7 + \frac{v_P}{2}$. E pelo 3 Ω: $i_3 = \frac{2 - v_P}{3}$.` },
+              { txt: T`Igualando: $\frac{2 - v_P}{3} = 7 + \frac{v_P}{2} \Rightarrow 4 - 2v_P = 42 + 3v_P \Rightarrow v_P = -7{,}6$ V.` },
+              { txt: T`$i_3(0^+) = \frac{2 - (-7{,}6)}{3} = 3{,}2$ A.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,5', txt: T`A corrente $i_3$ em $t \to +\infty$.`,
+            campos: [{ rot: T`i_3(\infty)`, un: 'A', valor: med('final', 'R3', 'i') }],
+            passos: [{ fase: 'final', txt: T`Indutor em curto de novo, em paralelo com o 3 Ω: $i_3(\infty) = 0$.` }],
+          },
+          {
+            l: 'f', pts: '0,5', txt: T`A corrente $i_L$ em $t \to +\infty$.`,
+            campos: [{ rot: T`i_L(\infty)`, un: 'A', valor: med('final', 'L', 'i') }],
+            passos: [
+              { fase: 'final', txt: T`P fica em 2 V (curto até a fonte). Pelo 2 Ω descem $\frac{2}{2} = 1$ A, e essa corrente vem da fonte de 2 V atravessando o indutor da direita para a esquerda.` },
+              { txt: T`Contra a seta: $i_L(\infty) = -1$ A.` },
+            ],
+          },
+        ],
+      },
+      {
+        n: 2, pontos: '3,5', circuito: 'q242b',
+        enunciado: T`Na figura abaixo, a chave está na posição $A$ durante bastante tempo, até ser alterada para a posição $B$ no instante $t = 0$.`,
+        anot: [{ t: 'v', el: 'C', txt: 'v' }, { t: 'i', el: 'C', txt: 'i' }],
+        itens: [
+          {
+            l: 'a', pts: '0,7', txt: T`A tensão $v$ no instante $t = 0^-$.`,
+            campos: [{ rot: T`v(0^-)`, un: 'V', valor: med('antes', 'C', 'v') }],
+            passos: [{ fase: 'antes', txt: T`Chave em A há bastante tempo, capacitor aberto: nenhuma corrente no 3 Ω e no 2 Ω, então o capacitor fica com a tensão da fonte: $v(0^-) = 12$ V.` }],
+          },
+          {
+            l: 'b', pts: '0,7', txt: T`A constante de tempo $\tau$ para o carregamento do capacitor a partir de $t > 0$.`,
+            campos: [{ rot: T`\tau`, un: 's', valor: TAU }],
+            passos: [{ fase: 'tau', txt: T`Em B, zerando a fonte de 4 V, o capacitor vê só o 2 Ω: $\tau = 2 \cdot 3 = 6$ s.` }],
+          },
+          {
+            l: 'c', pts: '0,7', txt: T`A expressão da tensão $v(t)$ para todo $t > 0$.`,
+            campos: expr1('C', 'v', 'v', 'V'),
+            passos: [{ fase: 'final', txt: T`$v(\infty) = 4$ V. Então $v(t) = 4 + (12 - 4)\,e^{-t/6} = 4 + 8\,e^{-t/6}$ V.` }],
+          },
+          {
+            l: 'd', pts: '0,7', txt: T`A expressão da corrente $i(t)$ para todo $t > 0$.`,
+            campos: expr1('C', 'i', 'i', 'A'),
+            passos: [
+              { txt: T`$i = C\frac{dv}{dt} = 3 \cdot \left(-\frac{8}{6}\right)e^{-t/6} = -4\,e^{-t/6}$ A.` },
+              { fase: 'inicial', txt: T`Conferindo em $0^+$: $\frac{4 - 12}{2} = -4$ A. O capacitor está descarregando.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,7', txt: T`Esboce o gráfico da tensão $v(t)$ para $t > 0$.`,
+            grafico: { el: 'C', q: 'v', nome: 'v', un: 'V' },
+            passos: [{ txt: T`Começa em 12 V e desce até a assíntota de 4 V. Em $t = \tau = 6$ s: $4 + 8e^{-1} \approx 6{,}94$ V.` }],
+          },
+        ],
+      },
+      {
+        n: 3, pontos: '3,0', rlc: { R: 1000, L: 1, C: 10e-9 },
+        enunciado: T`Um circuito RLC em série possui os seguintes parâmetros: $R = 1$ kΩ, $L = 1$ H e $C = 10$ nF. Determine o tipo de amortecimento apresentado pelo circuito.`,
+        itens: [
+          {
+            l: '', pts: '3,0', txt: T`Tipo de amortecimento.`,
+            escolha: { opcoes: AMORT, certa: 2 },
+            campos: [{ rot: T`\alpha`, un: '1/s', valor: 500 }, { rot: T`\omega_0`, un: 'rad/s', valor: 1e4 }],
+            passos: [
+              { txt: T`RLC série: $\alpha = \frac{R}{2L} = \frac{1000}{2 \cdot 1} = 500\ \text{s}^{-1}$.` },
+              { txt: T`$\omega_0 = \frac{1}{\sqrt{LC}} = \frac{1}{\sqrt{1 \cdot 10 \cdot 10^{-9}}} = \frac{1}{10^{-4}} = 10^4$ rad/s.` },
+              { txt: T`$\alpha = 500 < \omega_0 = 10\,000$: **subamortecido**. $\omega_d = \sqrt{10^8 - 500^2} \approx 9987$ rad/s.` },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: '2024-1', nome: 'P3 2024.1', data: '19/06/2024',
+    questoes: [
+      {
+        n: 1, pontos: '3,0', circuito: 'q241a',
+        enunciado: T`No circuito a seguir, a chave encontra-se na posição $A$ durante bastante tempo e muda para a posição $B$ no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'R4', txt: 'i_4' }, { t: 'i', el: 'C', txt: 'i_c' }, { t: 'v', el: 'C', txt: 'v_c' }, { t: 'i', el: 'R2', txt: 'i_2' }],
+        itens: [
+          {
+            l: 'a', pts: '0,5', txt: T`A corrente que percorre o resistor de 4 Ω ($i_4$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_4(0^-)`, un: 'A', valor: med('antes', 'R4', 'i') }],
+            passos: [{ fase: 'antes', txt: T`Chave em A: o capacitor fica em paralelo com o 4 Ω e, em regime, é **aberto**. A corrente faz o caminho fonte, 1 Ω, 4 Ω: $i_4 = \frac{10}{1 + 4} = 2$ A.` }],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`A tensão no capacitor ($v_c$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`v_c(0^-)`, un: 'V', valor: med('antes', 'C', 'v') }],
+            passos: [{ fase: 'antes', txt: T`O capacitor está em paralelo com o 4 Ω: $v_c(0^-) = 4 \cdot 2 = 8$ V.` }],
+          },
+          {
+            l: 'c', pts: '0,5', txt: T`A corrente no capacitor ($i_c$) no instante $t = 0^-$.`,
+            campos: [{ rot: T`i_c(0^-)`, un: 'A', valor: med('antes', 'C', 'i') }],
+            passos: [{ txt: T`Regime: capacitor aberto, $i_c(0^-) = 0$.` }],
+          },
+          {
+            l: 'd', pts: '0,5', txt: T`A corrente no capacitor ($i_c$) no instante $t = 0^+$.`,
+            campos: [{ rot: T`i_c(0^+)`, un: 'A', valor: med('inicial', 'C', 'i') }],
+            passos: [
+              { fase: 'inicial', txt: T`Em B, o capacitor (fonte de 8 V) liga na fonte de 6 V pelo 2 Ω. Sai do + do capacitor: $\frac{8 - 6}{2} = 1$ A.` },
+              { txt: T`A seta de $i_c$ entra pelo +: $i_c(0^+) = -1$ A.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,5', txt: T`A tensão no capacitor ($v_c$) em $t \to +\infty$.`,
+            campos: [{ rot: T`v_c(\infty)`, un: 'V', valor: med('final', 'C', 'v') }],
+            passos: [{ fase: 'final', txt: T`Regime em B: capacitor aberto, sem corrente no 2 Ω. $v_c(\infty) = 6$ V.` }],
+          },
+          {
+            l: 'f', pts: '0,5', txt: T`A corrente no resistor de 2 Ω ($i_2$) em $t \to +\infty$.`,
+            campos: [{ rot: T`i_2(\infty)`, un: 'A', valor: med('final', 'R2', 'i') }],
+            passos: [{ fase: 'final', txt: T`O 2 Ω está em série com o capacitor aberto: $i_2(\infty) = 0$. (De bônus: $\tau = 2 \cdot 1\,\text{mF} = 2$ ms.)` }],
+          },
+        ],
+      },
+      {
+        n: 2, pontos: '3,5', circuito: 'q241b',
+        enunciado: T`A figura exibe um circuito para carregar um indutor de $\frac{3}{2}$ H. O indutor se encontra inicialmente descarregado e a chave é fechada no instante $t = 0$.`,
+        anot: [{ t: 'i', el: 'L', txt: 'i' }, { t: 'v', el: 'L', txt: 'v' }],
+        itens: [
+          {
+            l: 'a', pts: '0,5', txt: T`A corrente no indutor ($i$) para $t \to +\infty$.`,
+            campos: [{ rot: T`i(\infty)`, un: 'A', valor: med('final', 'L', 'i') }],
+            passos: [
+              { fase: 'final', txt: T`Chave fechada, regime: indutor em curto. Resistência vista pela fonte: $6 + (3 \parallel 4) = 6 + \frac{12}{7} = \frac{54}{7}\ \Omega$. Corrente da fonte: $\frac{18}{54/7} = \frac{7}{3}$ A.` },
+              { txt: T`Divisor de corrente entre o 3 Ω e o 4 Ω: $i(\infty) = \frac{7}{3} \cdot \frac{3}{3 + 4} = 1$ A. (Por Thévenin: $\frac{V_{th}}{R_{th}} = \frac{6}{6} = 1$ A.)` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`A constante de tempo $\tau$ referente ao carregamento.`,
+            campos: [{ rot: T`\tau`, un: 's', valor: TAU }],
+            passos: [{ fase: 'tau', txt: T`Fonte zerada (fio): 6 Ω e 3 Ω em paralelo (2 Ω), em série com o 4 Ω: $R_{eq} = 6\ \Omega$. $\tau = \frac{3/2}{6} = 0{,}25$ s.` }],
+          },
+          {
+            l: 'c', pts: '1,0', txt: T`A expressão da corrente $i(t)$ para todo $t > 0$.`,
+            campos: expr1('L', 'i', 'i', 'A'),
+            passos: [{ txt: T`$i(0^+) = 0$ (descarregado). $i(t) = 1 + (0 - 1)\,e^{-t/0{,}25} = 1 - e^{-4t}$ A.` }],
+          },
+          {
+            l: 'd', pts: '1,0', txt: T`A expressão da tensão $v(t)$ para todo $t > 0$.`,
+            campos: expr1('L', 'v', 'v', 'V'),
+            passos: [
+              { txt: T`$v = L\frac{di}{dt} = 1{,}5 \cdot 4\,e^{-4t} = 6\,e^{-4t}$ V.` },
+              { fase: 'inicial', txt: T`Conferindo: em $0^+$ o indutor tem 0 A, então funciona como circuito aberto, e $v(0^+)$ é a tensão de Thévenin: $18 \cdot \frac{3}{9} = 6$ V.` },
+            ],
+          },
+          {
+            l: 'e', pts: '0,5', txt: T`Esboce o gráfico da corrente $i(t)$ para $t > 0$.`,
+            grafico: { el: 'L', q: 'i', nome: 'i', un: 'A' },
+            passos: [{ txt: T`Começa em 0, sobe e se aproxima de 1 A. Em $t = \tau = 0{,}25$ s: $1 - e^{-1} \approx 0{,}63$ A.` }],
+          },
+        ],
+      },
+      {
+        n: 3, pontos: '3,5', edo: { a: 5, b: 6, K: 24, x0: 12, dx0: -12, nome: 'v', un: 'V' },
+        enunciado: T`A tensão de um capacitor em um circuito de segunda ordem pode ser calculada pela expressão $\dfrac{d^2v}{dt^2} + 5\dfrac{dv}{dt} + 6v = 24$, com $v(0) = 12$ V e $\dfrac{dv}{dt}(0) = -12$ V/s.`,
+        itens: [
+          {
+            l: 'a', pts: '1,5', txt: T`Caracterize a resposta natural de $v(t)$ para $t > 0$ (amortecimento supercrítico, crítico ou subamortecimento).`,
+            escolha: { opcoes: AMORT, certa: 0 },
+            campos: [{ rot: 's_1', un: '1/s', valor: -2 }, { rot: 's_2', un: '1/s', valor: -3 }],
+            passos: [
+              { txt: T`Equação característica: $s^2 + 5s + 6 = 0 \Rightarrow (s + 2)(s + 3) = 0$: $s_1 = -2$ e $s_2 = -3$, reais e diferentes.` },
+              { txt: T`**Supercrítico** (pelo $\alpha$: $\alpha = 2{,}5 > \omega_0 = \sqrt{6} \approx 2{,}45$). Resposta natural: $v_n = A_1e^{-2t} + A_2e^{-3t}$.` },
+            ],
+          },
+          {
+            l: 'b', pts: '0,5', txt: T`Obtenha a resposta forçada de $v(t)$ para $t > 0$.`,
+            campos: [{ rot: T`v_f`, un: 'V', valor: 4 }],
+            passos: [{ txt: T`Derivadas de constante são zero: $6\,v_f = 24 \Rightarrow v_f = 4$ V.` }],
+          },
+          {
+            l: 'c', pts: '1,5', txt: T`Obtenha a solução geral de $v(t)$ para $t > 0$.`,
+            campos: [{ rot: 'A_1', un: 'V', valor: c => edoSol(c).A1 }, { rot: 'A_2', un: 'V', valor: c => edoSol(c).A2 }],
+            forma: T`v(t) = 4 + A_1e^{-2t} + A_2e^{-3t}`,
+            graficoEdo: true,
+            passos: [
+              { txt: T`$v(t) = 4 + A_1e^{-2t} + A_2e^{-3t}$. Com $v(0) = 12$: $A_1 + A_2 = 8$.` },
+              { txt: T`Com $v'(0) = -12$: $-2A_1 - 3A_2 = -12$.` },
+              { txt: T`Da primeira, $A_1 = 8 - A_2$. Substituindo: $-16 + 2A_2 - 3A_2 = -12 \Rightarrow A_2 = -4$ e $A_1 = 12$.` },
+              { txt: T`$v(t) = 4 + 12\,e^{-2t} - 4\,e^{-3t}$ V.` },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+];
+
+/* ============================================================
+   Desenho: texto (markdown + fórmulas), esquemas de circuito e osciloscópio
+   ============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* Número no formato brasileiro, com até 4 algarismos significativos. */
+function fmt(x, sig = 4) {
+  if (x === null || x === undefined || Number.isNaN(x)) return '–';
+  if (Math.abs(x) < 1e-9) return '0';
+  const a = Math.abs(x);
+  let s;
+  if (a >= 1e5 || a < 1e-3) {
+    const e = Math.floor(Math.log10(a));
+    const m = +(x / 10 ** e).toPrecision(3);
+    return `${String(m).replace('.', ',')}·10^${e}`;
+  }
+  s = String(+x.toPrecision(sig));
+  return s.replace('-', '−').replace('.', ',');
+}
+const fmtTex = x => {
+  const s = fmt(x).replace('−', '-');
+  const m = s.match(/^(-?[\d,]+)·10\^(-?\d+)$/);
+  if (m) return `${m[1].replace(',', '{,}')} \\cdot 10^{${m[2]}}`;
+  return s.replace(',', '{,}');
+};
+const UN_TEX = { 'Ω': '\\Omega', 'A/s': '\\text{A/s}', 'V/s': '\\text{V/s}', '1/s': '\\text{s}^{-1}', 'rad/s': '\\text{rad/s}' };
+const unTex = u => u ? '\\ ' + (UN_TEX[u] || `\\text{${u}}`) : '';
+
+/* ---------- markdown com fórmulas ---------- */
+function md(src) {
+  const linhas = src.replace(/\r/g, '').split('\n');
+  let out = '', i = 0;
+  const especial = /^(```|### |> |- |\d+\. |@w |@ver |\$\$|\||<)/;
+  while (i < linhas.length) {
+    const l = linhas[i];
+    if (!l.trim()) { i++; continue; }
+    if (l.startsWith('<')) { out += l; i++; continue; }
+    if (l.startsWith('$$')) {
+      const buf = [l];
+      if (!(l.length > 2 && l.trim().endsWith('$$') && l.trim() !== '$$')) {
+        i++;
+        while (i < linhas.length && !linhas[i].trim().endsWith('$$')) buf.push(linhas[i++]);
+        if (i < linhas.length) buf.push(linhas[i]);
+      }
+      i++;
+      out += `<div class="math-bloco">${esc(buf.join('\n'))}</div>`;
+      continue;
+    }
+    if (l.startsWith('### ')) { out += `<h3>${inline(l.slice(4))}</h3>`; i++; continue; }
+    if (l.startsWith('@w ')) {
+      const [nome, ...args] = l.slice(3).trim().split(/\s+/);
+      out += `<div class="widget" data-w="${esc(nome)}" data-arg="${esc(args.join(' '))}"></div>`; i++; continue;
+    }
+    if (l.startsWith('@ver ')) {
+      const links = l.slice(5).trim().split(/\s+/).map(ref => {
+        const [pid, qn] = ref.split(':');
+        const p = PROVAS.find(x => x.id === pid);
+        return p ? `<a href="#/prova/${pid}/${qn}">${esc(p.nome)}, ${qn}ª questão</a>` : '';
+      }).join('');
+      out += `<div class="ver"><span class="sr">Questões que usam isto:</span>${links}</div>`; i++; continue;
+    }
+    if (l.startsWith('|')) {
+      const rows = [];
+      while (i < linhas.length && linhas[i].startsWith('|')) rows.push(linhas[i++]);
+      const cel = r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      const cab = cel(rows[0]);
+      const corpo = rows.slice(2).map(cel);
+      out += `<div class="tabela-wrap"><table><thead><tr>${cab.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${corpo.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      continue;
+    }
+    if (l.startsWith('> ')) {
+      const buf = [];
+      while (i < linhas.length && linhas[i].startsWith('>')) buf.push(linhas[i++].replace(/^> ?/, ''));
+      out += `<aside class="nota">${md(buf.join('\n'))}</aside>`;
+      continue;
+    }
+    if (/^(- |\d+\. )/.test(l)) {
+      const ordenada = /^\d/.test(l), itens = [];
+      while (i < linhas.length && /^(- |\d+\. )/.test(linhas[i])) itens.push(`<li>${inline(linhas[i++].replace(/^(- |\d+\. )/, ''))}</li>`);
+      out += ordenada ? `<ol>${itens.join('')}</ol>` : `<ul>${itens.join('')}</ul>`;
+      continue;
+    }
+    const buf = [];
+    while (i < linhas.length && linhas[i].trim() && !especial.test(linhas[i])) buf.push(linhas[i++]);
+    out += `<p>${inline(buf.join(' '))}</p>`;
+  }
+  return out;
+}
+function inline(s) {
+  const guard = [];
+  const g = html => { guard.push(html); return `\u0001${guard.length - 1}\u0001`; };
+  s = s.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g, m => g(esc(m)))
+    .replace(/`([^`]+)`/g, (_, c) => g(`<code>${esc(c)}</code>`));
+  s = esc(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[\s(])\*([^*\s][^*]*?)\*/g, '$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) => `<a href="${u}"${/^https?:/.test(u) ? ' target="_blank" rel="noopener"' : ''}>${t}</a>`);
+  return s.replace(/\u0001(\d+)\u0001/g, (_, n) => guard[n]);
+}
+/* Desenha as fórmulas com KaTeX, se ele estiver carregado. */
+function formulas(el) {
+  if (!el || !window.renderMathInElement) return;
+  renderMathInElement(el, {
+    delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
+    throwOnError: false, ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg'],
+  });
+}
+
+/* ---------- esquemas de circuito em SVG ---------- */
+const U = 58;
+const FASE_CHAVE = { enunciado: 'antes', antes: 'antes', inicial: 'depois', final: 'depois', tau: 'depois', depois: 'depois' };
+const FASE_FOTO = { antes: 'antes', inicial: 'inicial', final: 'final' };
+const LADO = { cima: [0, -1], baixo: [0, 1], esq: [-1, 0], dir: [1, 0] };
+
+/* Rótulo com índice: "i_L" vira i com L subscrito. */
+function rotSVG(txt) {
+  const m = String(txt).match(/^([^_]+)_([^\s=]+)(.*)$/);
+  if (!m) return esc(txt);
+  return `${esc(m[1])}<tspan dy="4" font-size="0.75em">${esc(m[2])}</tspan><tspan dy="-4">${esc(m[3])}</tspan>`;
+}
+function texto(x, y, txt, cls, ancora = 'middle', dy = 0) {
+  return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${ancora}" class="${cls}">${rotSVG(txt)}</text>`;
+}
+/* Posiciona um texto ao lado de um ponto, numa direção. */
+function textoLado(cx, cy, dir, dist, txt, cls) {
+  const x = cx + dir[0] * dist, y = cy + dir[1] * dist;
+  const anc = dir[0] < -0.1 ? 'end' : dir[0] > 0.1 ? 'start' : 'middle';
+  const dy = dir[1] > 0.1 ? 11 : dir[1] < -0.1 ? -2 : 5;
+  return texto(x, y, txt, cls, anc, dy);
+}
+
+function svgCircuito(circ, { fase = 'enunciado', res = null, anot = [], fluxo = true, fotoExtra = null, semValores = false, chaves: chavesFixas = null } = {}) {
+  const pts = [];
+  for (const e of circ.elementos) {
+    if (e.t === 'W') pts.push(...e.p); else if (e.t === 'SPDT') pts.push(e.c, e.A, e.B); else pts.push(e.a, e.b);
+  }
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const mx = 1.75, my = 0.95;
+  const W = (x1 - x0 + 2 * mx) * U, H = (y1 - y0 + 2 * my) * U;
+  const X = x => (x - x0 + mx) * U, Y = y => (y - y0 + my) * U;
+  const chaves = chavesFixas || FASE_CHAVE[fase] || 'antes';
+  const mostraT0 = fase === 'enunciado' && !chavesFixas;
+  const foto = fotoExtra || (res && FASE_FOTO[fase] ? res[FASE_FOTO[fase]] : null);
+  const corFase = { antes: 'antes', inicial: 'inicial', final: 'final', tau: 'tau' }[fase];
+  let fios = '', corpo = '', rotulos = '', fluxos = '';
+
+  const { segmentos } = MOTOR.preparar(circ);
+  for (const s of segmentos) fios += `<line class="esq-fio" x1="${X(s.a[0])}" y1="${Y(s.a[1])}" x2="${X(s.b[0])}" y2="${Y(s.b[1])}"/>`;
+
+  // graus dos nós para as bolinhas de junção
+  const grau = new Map();
+  const soma = p => grau.set(MOTOR.chave(p), (grau.get(MOTOR.chave(p)) || 0) + 1);
+  segmentos.forEach(s => { soma(s.a); soma(s.b); });
+  const anotDe = id => anot.filter(a => a.el === id);
+
+  for (const e of circ.elementos) {
+    if (e.t === 'W') continue;
+    if (e.t === 'SPDT') {
+      [e.c, e.A, e.B].forEach(soma);
+      const pos = e[chaves];
+      const c = [X(e.c[0]), Y(e.c[1])];
+      const alvo = e[pos];
+      const p = [X(alvo[0]), Y(alvo[1])];
+      corpo += `<line class="esq-el" x1="${c[0]}" y1="${c[1]}" x2="${p[0]}" y2="${p[1]}" stroke-width="2.6"/>`;
+      for (const nome of ['A', 'B']) {
+        const q = [X(e[nome][0]), Y(e[nome][1])];
+        corpo += `<circle class="esq-term" cx="${q[0]}" cy="${q[1]}" r="4"/>`;
+        rotulos += texto(q[0] - 9, q[1] - 10, nome, 'esq-txt forte', 'middle', 0);
+      }
+      corpo += `<circle class="esq-term" cx="${c[0]}" cy="${c[1]}" r="4"/>`;
+      if (mostraT0) rotulos += texto(c[0] + 6, c[1] + 26, 't = 0', 'esq-txt forte', 'start');
+      continue;
+    }
+    soma(e.a); soma(e.b);
+    const ax = X(e.a[0]), ay = Y(e.a[1]), bx = X(e.b[0]), by = Y(e.b[1]);
+    const len = Math.hypot(bx - ax, by - ay), ux = (bx - ax) / len, uy = (by - ay) / len;
+    const cx = (ax + bx) / 2, cy = (ay + by) / 2;
+    const horiz = Math.abs(uy) < 0.5;
+    const ang = Math.atan2(uy, ux) * 180 / Math.PI;
+    const ans = fase === 'tau' ? [] : anotDe(e.id);
+    let P = horiz ? [0, -1] : [-1, 0];
+    if (!horiz && Math.abs(e.a[0] - x1) < 1e-9 && Math.abs(e.b[0] - x1) < 1e-9) P = [1, 0];
+    if (e.lr) P = LADO[e.lr];
+    if (ans.some(a => a.lado && LADO[a.lado][0] === P[0] && LADO[a.lado][1] === P[1])) P = [-P[0], -P[1]];
+    const Q = [-P[0], -P[1]];
+    const h = Math.min(e.t === 'SW' ? 22 : 26, len / 2 - 7);
+    const lead = (k1, k2) => `<line class="esq-el" x1="${ax}" y1="${ay}" x2="${cx - ux * k1}" y2="${cy - uy * k1}"/><line class="esq-el" x1="${cx + ux * k2}" y1="${cy + uy * k2}" x2="${bx}" y2="${by}"/>`;
+    const g = inner => `<g transform="translate(${cx} ${cy}) rotate(${ang})">${inner}</g>`;
+    let rot = e.rot || '';
+    let rotCls = 'esq-txt';
+    let tipo = e.t;
+    // transformações de cada fase
+    if (fase === 'tau' && e.t === 'V') tipo = 'curto-fonte';
+    if (fase === 'tau' && e.t === 'I') tipo = 'aberto-fonte';
+    if ((fase === 'antes' || fase === 'final') && e.t === 'C') tipo = 'aberto';
+    if ((fase === 'antes' || fase === 'final') && e.t === 'L') tipo = 'curto';
+    if (fase === 'inicial' && (e.t === 'C' || e.t === 'L')) tipo = 'memoria';
+    if (fase === 'tau' && (e.t === 'C' || e.t === 'L')) tipo = 'terminais';
+
+    if (tipo === 'R') {
+      const pts2 = [[-h, 0]];
+      for (let k = 0; k < 6; k++) pts2.push([-h + (k + 0.5) * (2 * h / 6), k % 2 ? 7 : -7]);
+      pts2.push([h, 0]);
+      corpo += lead(h, h) + g(`<polyline class="esq-el" points="${pts2.map(p => p.join(',')).join(' ')}"/>`);
+    } else if (tipo === 'L') {
+      const r = h / 4;
+      corpo += lead(h, h) + g(`<path class="esq-el" d="M ${-h} 0 a ${r} ${r} 0 0 1 ${2 * r} 0 a ${r} ${r} 0 0 1 ${2 * r} 0 a ${r} ${r} 0 0 1 ${2 * r} 0 a ${r} ${r} 0 0 1 ${2 * r} 0"/>`);
+    } else if (tipo === 'C') {
+      corpo += lead(5, 5) + g(`<line class="esq-el" x1="-5" y1="-14" x2="-5" y2="14" stroke-width="2.8"/><line class="esq-el" x1="5" y1="-14" x2="5" y2="14" stroke-width="2.8"/>`);
+    } else if (tipo === 'V') {
+      corpo += lead(4, 4) + g(`<line class="esq-el" x1="-4" y1="-8" x2="-4" y2="8" stroke-width="5"/><line class="esq-el" x1="4" y1="-16" x2="4" y2="16"/>`);
+      const sx = cx + ux * 10 + Q[0] * 22, sy = cy + uy * 10 + Q[1] * 22;
+      rotulos += `<text x="${sx}" y="${sy + 5}" text-anchor="middle" class="esq-txt forte">+</text>`;
+    } else if (tipo === 'I') {
+      corpo += lead(15, 15) + g(`<circle class="esq-el" cx="0" cy="0" r="15"/><path class="esq-el" d="M -8 0 L 8 0 M 3 -5 L 8 0 L 3 5"/>`);
+    } else if (tipo === 'SW') {
+      const st = e[chaves];
+      const sy = (Q[0] * -uy + Q[1] * ux) > 0 ? 1 : -1;
+      const blade = st === 'fechada' ? `<line class="esq-el" x1="${-h}" y1="0" x2="${h}" y2="0" stroke-width="2.6"/>`
+        : `<line class="esq-el" x1="${-h}" y1="0" x2="${(-h + 2 * h * Math.cos(0.5)).toFixed(1)}" y2="${(sy * 2 * h * Math.sin(0.5)).toFixed(1)}" stroke-width="2.6"/>`;
+      corpo += lead(h, h) + g(`${blade}<circle class="esq-term" cx="${-h}" cy="0" r="3.5"/><circle class="esq-term" cx="${h}" cy="0" r="3.5"/>`);
+      rot = mostraT0 ? 't = 0' : (st === 'fechada' ? 'fechada' : 'aberta');
+      rotCls = 'esq-txt forte';
+    } else if (tipo === 'aberto') {
+      corpo += lead(9, 9) + g(`<line class="esq-fantasma" x1="-5" y1="-14" x2="-5" y2="14"/><line class="esq-fantasma" x1="5" y1="-14" x2="5" y2="14"/>`);
+      rot = 'aberto'; rotCls = `esq-txt forte t-${corFase}`;
+    } else if (tipo === 'curto') {
+      corpo += `<line class="esq-el esq-fase-${corFase}" x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke-width="3.6"/>`;
+      rot = 'curto'; rotCls = `esq-txt forte t-${corFase}`;
+    } else if (tipo === 'memoria') {
+      const val = res ? res.estado[e.id] : 0;
+      if (e.t === 'C') {
+        corpo += lead(15, 15) + g(`<circle class="esq-el esq-fase-inicial" cx="0" cy="0" r="15" stroke-width="2.6"/>`);
+        rotulos += `<text x="${cx - ux * 7}" y="${cy - uy * 7 + 5}" text-anchor="middle" class="esq-sinal" style="fill:var(--f-inicial)">+</text><text x="${cx + ux * 7}" y="${cy + uy * 7 + 5}" text-anchor="middle" class="esq-sinal" style="fill:var(--f-inicial)">−</text>`;
+        rot = `${fmt(val)} V`;
+      } else {
+        corpo += lead(15, 15) + g(`<circle class="esq-el esq-fase-inicial" cx="0" cy="0" r="15" stroke-width="2.6"/><path class="esq-el esq-fase-inicial" d="M -8 0 L 8 0 M 3 -5 L 8 0 L 3 5"/>`);
+        rot = `${fmt(val)} A`;
+      }
+      rotCls = 'esq-txt forte t-inicial';
+    } else if (tipo === 'terminais') {
+      corpo += lead(12, 12) + `<circle class="esq-term" cx="${cx - ux * 12}" cy="${cy - uy * 12}" r="4"/><circle class="esq-term" cx="${cx + ux * 12}" cy="${cy + uy * 12}" r="4"/>`;
+      rot = res && res.ordem === 1 ? `Req = ${fmt(res.req)} Ω` : 'Req';
+      rotCls = 'esq-txt forte t-tau';
+    } else if (tipo === 'curto-fonte') {
+      corpo += `<line class="esq-el esq-fase-tau" x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke-width="3.6"/>`;
+      rot = 'zerada (fio)'; rotCls = 'esq-txt forte t-tau';
+    } else if (tipo === 'aberto-fonte') {
+      corpo += lead(9, 9);
+      rot = 'zerada (aberta)'; rotCls = 'esq-txt forte t-tau';
+    }
+    const off = tipo === 'I' || tipo === 'memoria' ? 26 : tipo === 'V' ? 24 : 18;
+    if (rot) rotulos += textoLado(cx, cy, P, off, rot, rotCls);
+
+    // anotações: setas de corrente e polaridades
+    let pilhaQ = 0, pilhaP = 1;
+    for (const an of ans) {
+      const valor = foto && !semValores ? (an.t === 'i' ? foto.el[e.id].i : foto.el[e.id].v) : null;
+      const sufixo = valor !== null ? ` = ${fmt(valor)} ${an.t === 'i' ? 'A' : 'V'}` : '';
+      const lado = an.lado ? LADO[an.lado] : Q;
+      if (an.t === 'i') {
+        const d = 20 + pilhaQ * 4;
+        const px = cx + lado[0] * d, py = cy + lado[1] * d;
+        const x1 = px - ux * 13, y1 = py - uy * 13, x2 = px + ux * 13, y2 = py + uy * 13;
+        const hx = -ux * 6, hy = -uy * 6, nx = -uy * 4.5, ny = ux * 4.5;
+        rotulos += `<g class="esq-i"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="2"/><path d="M ${x2} ${y2} L ${x2 + hx + nx} ${y2 + hy + ny} L ${x2 + hx - nx} ${y2 + hy - ny} Z" stroke="none"/></g>`;
+        rotulos += textoLado(px, py, lado, 14, an.txt + sufixo, 'esq-i-txt');
+        pilhaQ++;
+      } else {
+        const sl = an.lado ? lado : Q;
+        const ext = Math.max(h, 15) + 4;
+        const sx1 = cx - ux * ext + sl[0] * 14, sy1 = cy - uy * ext + sl[1] * 14;
+        const sx2 = cx + ux * ext + sl[0] * 14, sy2 = cy + uy * ext + sl[1] * 14;
+        rotulos += `<text x="${sx1}" y="${sy1 + 6}" text-anchor="middle" class="esq-sinal">+</text><text x="${sx2}" y="${sy2 + 6}" text-anchor="middle" class="esq-sinal">−</text>`;
+        if (an.lado) rotulos += textoLado(cx, cy, sl, 34, an.txt + sufixo, 'esq-v-txt');
+        else {
+          const base = off + (horiz ? 18 : 0);
+          rotulos += horiz ? textoLado(cx, cy, P, base, an.txt + sufixo, 'esq-v-txt') : textoLado(cx, cy + 20 * pilhaP, P, off, an.txt + sufixo, 'esq-v-txt');
+          pilhaP++;
+        }
+      }
+    }
+  }
+  let nos = '';
+  for (const [k, n] of grau) if (n >= 3) { const [x, y] = k.split(',').map(Number); nos += `<circle class="esq-no" cx="${X(x)}" cy="${Y(y)}" r="4"/>`; }
+
+  // corrente andando pelos fios
+  if (foto && fluxo) {
+    const trechos = [];
+    for (const f of foto.fios) trechos.push({ a: f.a, b: f.b, i: f.i });
+    for (const e of circ.elementos) {
+      if (!e.id || e.t === 'W') continue;
+      const v = foto.el[e.id];
+      if (!v) continue;
+      if (e.t === 'SPDT') trechos.push({ a: e.c, b: e[e[chaves]], i: v.i });
+      else trechos.push({ a: e.a, b: e.b, i: v.i });
+    }
+    const max = Math.max(...trechos.map(t => Math.abs(t.i)), 1e-9);
+    for (const t of trechos) {
+      if (Math.abs(t.i) < 1e-6 * Math.max(1, max) || Math.abs(t.i) < 1e-7) continue;
+      const [p, q] = t.i > 0 ? [t.a, t.b] : [t.b, t.a];
+      const vel = 0.25 + 0.75 * Math.abs(t.i) / max;
+      fluxos += `<path class="esq-fluxo" d="M ${X(p[0])} ${Y(p[1])} L ${X(q[0])} ${Y(q[1])}" style="animation-duration:${(0.9 / vel).toFixed(2)}s"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${W.toFixed(0)} ${H.toFixed(0)}" role="img" aria-label="Esquema do circuito">${fios}${corpo}${fluxos}${nos}${rotulos}</svg>`;
+}
+
+/* ---------- osciloscópio ---------- */
+function osciloscopio({ curvas, t0 = 0, t1, antes = null, marcas = {}, rotY = '', un = '', rotT = 't (s)', altura = 250, legenda = null }) {
+  const W = 640, H = altura, ml = 62, mr = 16, mt = 28, mb = 32;
+  const N = 360;
+  const amostras = curvas.map(c => {
+    const pts = [];
+    for (let k = 0; k <= N; k++) { const t = Math.max(0, t0) + (t1 - Math.max(0, t0)) * k / N; pts.push([t, c.f(t)]); }
+    return pts;
+  });
+  let ys = amostras.flat().map(p => p[1]).filter(Number.isFinite);
+  if (antes !== null) ys.push(antes);
+  if (marcas.assintota !== undefined) ys.push(marcas.assintota);
+  let ymin = Math.min(...ys, 0), ymax = Math.max(...ys, 0);
+  if (ymax - ymin < 1e-9) { ymax += 1; ymin -= 1; }
+  const pad = (ymax - ymin) * 0.12;
+  ymin -= pad; ymax += pad;
+  const X = t => ml + (t - t0) / (t1 - t0) * (W - ml - mr);
+  const Y = y => mt + (ymax - y) / (ymax - ymin) * (H - mt - mb);
+  let s = '';
+  for (let k = 0; k <= 10; k++) { const x = ml + k * (W - ml - mr) / 10; s += `<line class="osc-grade" x1="${x}" y1="${mt}" x2="${x}" y2="${H - mb}"/>`; }
+  for (let k = 0; k <= 6; k++) { const y = mt + k * (H - mt - mb) / 6; s += `<line class="osc-grade" x1="${ml}" y1="${y}" x2="${W - mr}" y2="${y}"/>`; }
+  if (ymin < 0 && ymax > 0) s += `<line class="osc-eixo" x1="${ml}" y1="${Y(0)}" x2="${W - mr}" y2="${Y(0)}"/>`;
+  if (t0 < 0) s += `<line class="osc-eixo" x1="${X(0)}" y1="${mt}" x2="${X(0)}" y2="${H - mb}"/>`;
+  // marcas de tempo
+  if (marcas.tau) {
+    for (let k = 1; k <= 5; k++) {
+      const t = k * marcas.tau;
+      if (t > t1) break;
+      s += `<text class="osc-txt" x="${X(t)}" y="${H - mb + 18}" text-anchor="middle">${k === 1 ? 'τ' : k + 'τ'}</text>`;
+      if (k === 1) s += `<line class="osc-guia" x1="${X(t)}" y1="${mt}" x2="${X(t)}" y2="${H - mb}"/>`;
+    }
+  } else {
+    for (let k = 0; k <= 4; k++) { const t = t0 + (t1 - t0) * k / 4; s += `<text class="osc-txt" x="${X(t)}" y="${H - mb + 18}" text-anchor="middle">${fmt(t, 3)}</text>`; }
+  }
+  s += `<text class="osc-txt" x="${X(0)}" y="${H - mb + 18}" text-anchor="middle">0</text>`;
+  s += `<text class="osc-txt" x="${W - mr}" y="17" text-anchor="end">${esc(rotT)}</text>`;
+  // valores no eixo vertical
+  const marcaY = (v, forte) => `<text class="osc-txt${forte ? ' forte' : ''}" x="${ml - 8}" y="${Y(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+  const yVals = new Set();
+  if (marcas.assintota !== undefined) {
+    s += `<line class="osc-guia" x1="${ml}" y1="${Y(marcas.assintota)}" x2="${W - mr}" y2="${Y(marcas.assintota)}"/>`;
+    yVals.add(marcas.assintota);
+  }
+  if (marcas.inicio !== undefined) yVals.add(marcas.inicio);
+  if (antes !== null) yVals.add(antes);
+  const lista = [...yVals].sort((a, b) => b - a);
+  let ultimo = -1e9;
+  for (const v of lista) { const y = Y(v); if (Math.abs(y - ultimo) > 14) { s += marcaY(v, true); ultimo = y; } }
+  if (!lista.length) { s += marcaY(ymax - pad, false); s += marcaY(ymin + pad, false); }
+  if (marcas.tangente) {
+    const { x0, xinf, tau } = marcas.tangente;
+    s += `<line class="osc-guia" x1="${X(0)}" y1="${Y(x0)}" x2="${X(tau)}" y2="${Y(xinf)}" style="stroke-dasharray:2 4"/>`;
+  }
+  if (marcas.envelope) for (const e of marcas.envelope) {
+    let d1 = '', d2 = '';
+    const cl = y => Math.max(ymin, Math.min(ymax, y));
+    for (let k = 0; k <= 80; k++) { const t = t1 * k / 80; d1 += `${k ? 'L' : 'M'} ${X(t)} ${Y(cl(e.base + e.f(t)))} `; d2 += `${k ? 'L' : 'M'} ${X(t)} ${Y(cl(e.base - e.f(t)))} `; }
+    s += `<path class="osc-guia" d="${d1}"/><path class="osc-guia" d="${d2}"/>`;
+  }
+  if (antes !== null && t0 < 0) {
+    s += `<path class="osc-antes" d="M ${X(t0)} ${Y(antes)} L ${X(0)} ${Y(antes)}"/>`;
+    const ini = curvas[0].f(0);
+    if (Math.abs(ini - antes) > 1e-9) s += `<line class="osc-guia" x1="${X(0)}" y1="${Y(antes)}" x2="${X(0)}" y2="${Y(ini)}"/>`;
+  }
+  amostras.forEach((pts, k) => {
+    const d = pts.map((p, j) => `${j ? 'L' : 'M'} ${X(p[0]).toFixed(1)} ${Y(Math.max(ymin, Math.min(ymax, p[1]))).toFixed(1)}`).join(' ');
+    s += `<path class="osc-traco${k ? ' t2' : ''}" d="${d}"/>`;
+  });
+  if (rotY) s += `<text class="osc-txt forte" x="8" y="17">${esc(rotY)}${un ? ' (' + esc(un) + ')' : ''}</text>`;
+  const leg = legenda ? `<div class="osc-legenda">${legenda}</div>` : '';
+  return `<div class="osc"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico ${esc(rotY)}">${s}</svg>${leg}</div>`;
+}
+
+/* Gráfico de uma grandeza de 1ª ordem a partir da análise do circuito. */
+function grafico1(res, g) {
+  const m = { el: g.el, q: g.q };
+  const xm = MOTOR.medir(res.antes, m), x0 = MOTOR.medir(res.inicial, m), xi = MOTOR.medir(res.final, m), tau = res.tau;
+  const f = t => xi + (x0 - xi) * Math.exp(-t / tau);
+  return osciloscopio({
+    curvas: [{ f }], t0: -0.6 * tau, t1: 5.2 * tau, antes: xm, rotY: g.nome.replace('_', ''), un: g.un,
+    marcas: { tau, assintota: xi, inicio: x0, tangente: { x0, xinf: xi, tau } },
+    legenda: `<span><i style="background:var(--traco)"></i>${esc(g.nome.replace('_', ''))}(t) = ${fmt(xi)} ${x0 - xi < 0 ? '−' : '+'} ${fmt(Math.abs(x0 - xi))}·e^(−t/${fmt(tau)})</span><span>τ = ${fmt(tau)} s</span>`,
+  });
+}
+/* Gráfico de 2ª ordem a partir de uma solução de MOTOR.solucao2. */
+function grafico2(sol, nome, un) {
+  const lento = sol.tipo === 'super' ? Math.min(Math.abs(sol.s1), Math.abs(sol.s2)) : Math.abs(sol.s1);
+  let t1 = 6 / Math.max(lento, 1e-9);
+  if (sol.tipo === 'sub') t1 = Math.min(t1, 4 * 2 * Math.PI / sol.wd + 2 / Math.abs(sol.s1));
+  const env = sol.tipo === 'sub' && sol.wd > 0.5 * Math.abs(sol.s1) ? [{ base: sol.xf, f: t => Math.hypot(sol.B1, sol.B2) * Math.exp(sol.s1 * t) }] : null;
+  return osciloscopio({
+    curvas: [{ f: sol.f }], t0: 0, t1, rotY: nome, un,
+    marcas: { assintota: sol.xf, inicio: sol.f(0), envelope: env },
+    legenda: `<span><i style="background:var(--traco)"></i>${esc(nome)}(t)</span><span>${{ super: 'supercrítico', critico: 'crítico', sub: 'subamortecido' }[sol.tipo]}</span>${env ? '<span>tracejado: envelope e^(−αt)</span>' : ''}`,
+  });
+}
+
+/* ============================================================
+   Estado, laboratórios, questões, simulado e telas
+   ============================================================ */
+const CHAVE = 'p3-circuitos';
+let estado = carregar();
+function carregar() {
+  const novo = { tema: null, vistas: {}, acertos: {} };
+  try { return { ...novo, ...JSON.parse(localStorage.getItem(CHAVE) || '{}') }; } catch (e) { return novo; }
+}
+function save() { try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) { /* sem armazenamento: segue sem salvar */ } }
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 3200); }
+
+/* ---------- etapas (lidas das <textarea class="etapa">) ---------- */
+const ETAPAS = $$('textarea.etapa').map(ta => {
+  const partes = ta.value.split(/^=== *(\w+) *$/m);
+  const e = {};
+  for (const l of partes[0].split('\n')) { const m = l.match(/^(\w+):\s*(.*)$/); if (m) e[m[1]] = m[2].trim(); }
+  for (let i = 1; i < partes.length; i += 2) e[partes[i]] = partes[i + 1].trim();
+  e.treino = (e.treino || '').split('\n').filter(l => l.startsWith('? ')).map(l => {
+    const [p, r, u, x] = l.slice(2).split(' | ');
+    return { p, r: parseNum(r), u: u === '-' ? '' : u, x };
+  });
+  return e;
+});
+
+/* ---------- números digitados: aceita 1,5  4/3  -9.6  2m  10^4 ---------- */
+function parseNum(txt) {
+  if (txt === undefined || txt === null) return NaN;
+  let s = String(txt).trim().replace(/−/g, '-').replace(/×/g, '*').replace(/\s+/g, '').replace(/,/g, '.');
+  const sufixo = { m: 1e-3, k: 1e3, u: 1e-6, µ: 1e-6, n: 1e-9 };
+  const ms = s.match(/^(.*\d)([mkuµn])$/);
+  let mult = 1;
+  if (ms) { s = ms[1]; mult = sufixo[ms[2]]; }
+  let i = 0;
+  const ver = () => s[i];
+  function expr() { let v = termo(); while (ver() === '+' || ver() === '-') { const o = s[i++]; const w = termo(); v = o === '+' ? v + w : v - w; } return v; }
+  function termo() { let v = pot(); while (ver() === '*' || ver() === '/') { const o = s[i++]; const w = pot(); v = o === '*' ? v * w : v / w; } return v; }
+  function pot() { let v = un(); if (ver() === '^') { i++; v = Math.pow(v, pot()); } return v; }
+  function un() { if (ver() === '-') { i++; return -un(); } if (ver() === '+') { i++; return un(); } return prim(); }
+  function prim() {
+    if (ver() === '(') { i++; const v = expr(); if (ver() === ')') i++; return v; }
+    const m = s.slice(i).match(/^\d*\.?\d+(e[-+]?\d+)?/i);
+    if (!m) throw new Error('número');
+    i += m[0].length;
+    return parseFloat(m[0]);
+  }
+  try { const v = expr(); return i === s.length ? v * mult : NaN; } catch (e) { return NaN; }
+}
+function confere(x, v) {
+  if (!Number.isFinite(x)) return false;
+  if (Math.abs(v) < 1e-6) return Math.abs(x) < 1e-3;
+  return Math.abs(x - v) <= 0.02 * Math.abs(v) + 1e-9;
+}
+
+/* ---------- registro de circuitos usados na tela ---------- */
+const REG = new Map();
+let regSeq = 0;
+function registrar(dados) { const id = 'r' + (++regSeq); REG.set(id, dados); return id; }
+const cacheRes = new WeakMap();
+function analise(circ) { if (!cacheRes.has(circ)) cacheRes.set(circ, MOTOR.analisar(circ)); return cacheRes.get(circ); }
+
+const NOME_FASE = { enunciado: 'Circuito', antes: 't = 0⁻', inicial: 't = 0⁺', final: 't → ∞', tau: 'τ', depois: 't > 0 (RLC)' };
+function textoFase(fase, res, circ) {
+  const temC = circ.elementos.some(e => e.t === 'C'), temL = circ.elementos.some(e => e.t === 'L');
+  const quem = [temC ? 'capacitor' : '', temL ? 'indutor' : ''].filter(Boolean).join(' e ');
+  if (fase === 'enunciado') return 'O circuito como está na prova, com a chave na posição de antes de t = 0.';
+  if (fase === 'antes') return `Regime antes da chave: ${[temC ? 'capacitor = <b>aberto</b>' : '', temL ? 'indutor = <b>curto</b>' : ''].filter(Boolean).join(', ')}. Daqui sai a "memória" do ${quem}.`;
+  if (fase === 'inicial') return `Logo depois da chave: ${[temC ? 'o capacitor vira <b>fonte de tensão</b> com o valor de 0⁻' : '', temL ? 'o indutor vira <b>fonte de corrente</b> com o valor de 0⁻' : ''].filter(Boolean).join('; ')}.`;
+  if (fase === 'final') return `Regime depois da chave: ${[temC ? 'capacitor = <b>aberto</b>' : '', temL ? 'indutor = <b>curto</b>' : ''].filter(Boolean).join(', ')} de novo.`;
+  if (fase === 'tau') return `Fontes zeradas (tensão vira fio, corrente vira aberta), olhando dos terminais do ${quem}: R<sub>eq</sub> = ${fmt(res.req)} Ω, então τ = ${fmt(res.tau)} s.`;
+  if (fase === 'depois') return `Para t > 0: α = ${fmt(res.alfa)} s⁻¹ e ω₀ = ${fmt(res.w0)} rad/s.`;
+  return '';
+}
+function valoresFase(fase, res, anot) {
+  const foto = res && FASE_FOTO[fase] ? res[FASE_FOTO[fase]] : null;
+  if (!foto) return '';
+  const cls = { antes: 'antes', inicial: 'inicial', final: 'final' }[fase];
+  return `<div class="valores">${anot.map(a => {
+    const v = a.t === 'i' ? foto.el[a.el].i : foto.el[a.el].v;
+    return `<span style="color:var(--f-${cls})">${rotSVGtxt(a.txt)}(${{ antes: '0⁻', inicial: '0⁺', final: '∞' }[fase]}) = ${fmt(v)} ${a.t === 'i' ? 'A' : 'V'}</span>`;
+  }).join('')}</div>`;
+}
+const rotSVGtxt = t => esc(t).replace(/_(\w+)/, '<sub>$1</sub>');
+
+/* Explorador: abas de fase + esquema + leitura. */
+function explorador(circ, anot, ordem, faseIni = 'enunciado') {
+  const res = analise(circ);
+  const fases = res.ordem === 2 ? ['enunciado', 'antes', 'inicial', 'depois'] : ['enunciado', 'antes', 'inicial', 'final', 'tau'];
+  const id = registrar({ circ, anot, res });
+  return `<div class="explorador" data-reg="${id}">
+    <div class="fases" role="tablist" aria-label="Instantes">${fases.map(f => `<button role="tab" data-acao="fase" data-valor="${f}" data-fase="${f}" aria-selected="${f === faseIni}">${NOME_FASE[f]}</button>`).join('')}</div>
+    <div class="esquema">${svgCircuito(circ, { fase: faseIni, res, anot })}</div>
+    <div class="leitura"><p>${textoFase(faseIni, res, circ)}</p>${valoresFase(faseIni, res, anot)}</div>
+  </div>`;
+}
+function mudarFase(valor, botao) {
+  const box = botao.closest('.explorador');
+  const { circ, anot, res } = REG.get(box.dataset.reg);
+  $$('.fases button', box).forEach(b => b.setAttribute('aria-selected', String(b === botao)));
+  $('.esquema', box).innerHTML = svgCircuito(circ, { fase: valor, res, anot });
+  $('.leitura', box).innerHTML = `<p>${textoFase(valor, res, circ)}</p>${valoresFase(valor, res, anot)}`;
+}
+
+/* ---------- bancada ao vivo (RC e RL) ---------- */
+const BANC = { modo: 'RC', pos: 'A', x: 0, hist: [], t: 0, raf: 0, ult: 0, ultFluxo: 0 };
+function circBancada(modo) {
+  return {
+    terra: [0, 3],
+    elementos: [
+      { id: 'V', t: 'V', a: [0, 3], b: [0, 0], valor: 10, rot: '10 V' },
+      { t: 'W', p: [[0, 0], [2, 0]] },
+      { id: 'S', t: 'SPDT', c: [3, 0], A: [2, 0], B: [2.4, 1], antes: 'A', depois: 'B' },
+      { t: 'W', p: [[2.4, 1], [2.4, 3]] },
+      { id: 'R', t: 'R', a: [3, 0], b: [5, 0], valor: 2, rot: '2 Ω' },
+      modo === 'RC' ? { id: 'X', t: 'C', a: [5, 0], b: [5, 3], valor: 0.5, rot: '0,5 F' } : { id: 'X', t: 'L', a: [5, 0], b: [5, 3], valor: 2, rot: '2 H' },
+      { t: 'W', p: [[0, 3], [5, 3]] },
+    ],
+  };
+}
+function bancadaHTML() {
+  return `<div class="bancada" id="bancada">
+    <div class="bancada-topo">
+      <div class="modos" role="group" aria-label="Elemento">
+        <button data-acao="banc-modo" data-valor="RC" aria-pressed="${BANC.modo === 'RC'}">Capacitor</button>
+        <button data-acao="banc-modo" data-valor="RL" aria-pressed="${BANC.modo === 'RL'}">Indutor</button>
+      </div>
+      <button class="prim" data-acao="banc-chave">Virar a chave</button>
+    </div>
+    <div class="esquema" id="banc-esq"></div>
+    <div class="leituras" id="banc-leit"></div>
+    <div id="banc-osc"></div>
+    <div class="dica-chave" id="banc-dica"></div>
+  </div>`;
+}
+function bancadaDesenhar() {
+  const circ = circBancada(BANC.modo);
+  const foto = MOTOR.foto(circ, { modo: 'inicial', chaves: BANC.pos === 'A' ? 'antes' : 'depois', estado: { X: BANC.x } });
+  // impõe a corrente atual (a do circuito real) para desenhar o fluxo
+  const anot = BANC.modo === 'RC' ? [{ t: 'v', el: 'X', txt: 'v_C' }, { t: 'i', el: 'X', txt: 'i_C' }] : [{ t: 'i', el: 'X', txt: 'i_L' }, { t: 'v', el: 'X', txt: 'v_L' }];
+  $('#banc-esq').innerHTML = svgCircuito(circ, { fase: 'enunciado', anot, fotoExtra: foto, semValores: true, chaves: BANC.pos === 'A' ? 'antes' : 'depois' });
+  $('#banc-dica').textContent = BANC.modo === 'RC'
+    ? `Chave em ${BANC.pos}: o capacitor está ${BANC.pos === 'A' ? 'carregando pela fonte' : 'descarregando pelo resistor'}. τ = RC = 1 s.`
+    : `Chave em ${BANC.pos}: o indutor está ${BANC.pos === 'A' ? 'ligado na fonte' : 'em roda livre pelo resistor'}. τ = L/R = 1 s.`;
+  $('#banc-osc').innerHTML = `<div class="osc"><svg viewBox="0 0 640 220" id="banc-svg">${gradeOsc(640, 220)}<path id="banc-t1" class="osc-traco"/><path id="banc-t2" class="osc-traco ${BANC.modo === 'RC' ? 't2' : 't3'}"/>
+    <text class="osc-txt" x="10" y="16">${BANC.modo === 'RC' ? 'vC: 0 a 10 V' : 'iL: 0 a 5 A'}</text><text class="osc-txt" x="630" y="16" text-anchor="end">${BANC.modo === 'RC' ? 'iC: −5 a 5 A' : 'vL: −10 a 10 V'}</text></svg>
+    <div class="osc-legenda"><span><i style="background:var(--traco)"></i>${BANC.modo === 'RC' ? 'v_C, não pula' : 'i_L, não pula'}</span><span><i style="background:${BANC.modo === 'RC' ? 'var(--traco-2)' : 'var(--tensao)'}"></i>${BANC.modo === 'RC' ? 'i_C, pula' : 'v_L, pula'}</span><span>últimos 6 s</span></div></div>`;
+  BANC.ultFluxo = 0;
+}
+function gradeOsc(W, H) {
+  let s = '';
+  for (let k = 0; k <= 12; k++) s += `<line class="osc-grade" x1="${k * W / 12}" y1="0" x2="${k * W / 12}" y2="${H}"/>`;
+  for (let k = 0; k <= 6; k++) s += `<line class="osc-grade" x1="0" y1="${k * H / 6}" x2="${W}" y2="${k * H / 6}"/>`;
+  return s + `<line class="osc-eixo" x1="0" y1="${H / 2}" x2="${W}" y2="${H / 2}"/>`;
+}
+function bancadaPasso(agora) {
+  if (!$('#bancada')) { BANC.raf = 0; return; }
+  const dt = Math.min(0.05, (agora - (BANC.ult || agora)) / 1000);
+  BANC.ult = agora;
+  BANC.t += dt;
+  const tau = 1;
+  let x, y;
+  if (BANC.modo === 'RC') {
+    const alvo = BANC.pos === 'A' ? 10 : 0;
+    BANC.x += (alvo - BANC.x) * (1 - Math.exp(-dt / tau));
+    x = BANC.x; y = (alvo - BANC.x) / 2;
+  } else {
+    const alvo = BANC.pos === 'A' ? 5 : 0;
+    BANC.x += (alvo - BANC.x) * (1 - Math.exp(-dt / tau));
+    x = BANC.x; y = BANC.pos === 'A' ? 10 - 2 * BANC.x : -2 * BANC.x;
+  }
+  BANC.hist.push([BANC.t, x, y]);
+  while (BANC.hist.length && BANC.hist[0][0] < BANC.t - 6) BANC.hist.shift();
+  const W = 640, H = 220;
+  const X = t => W - (BANC.t - t) / 6 * W;
+  const Y1 = BANC.modo === 'RC' ? v => H - 12 - v / 10 * (H - 24) : v => H - 12 - v / 5 * (H - 24);
+  const Y2 = BANC.modo === 'RC' ? v => H / 2 - v / 5 * (H / 2 - 12) : v => H / 2 - v / 10 * (H / 2 - 12);
+  const p1 = $('#banc-t1'), p2 = $('#banc-t2');
+  if (p1) {
+    p1.setAttribute('d', BANC.hist.map((h, k) => `${k ? 'L' : 'M'}${X(h[0]).toFixed(1)} ${Y1(h[1]).toFixed(1)}`).join(''));
+    p2.setAttribute('d', BANC.hist.map((h, k) => `${k ? 'L' : 'M'}${X(h[0]).toFixed(1)} ${Y2(h[2]).toFixed(1)}`).join(''));
+  }
+  const leit = $('#banc-leit');
+  if (leit && agora - (leit._t || 0) > 120) {
+    leit._t = agora;
+    leit.innerHTML = BANC.modo === 'RC'
+      ? `<span style="color:var(--f-final)">v<sub>C</sub> = ${fmt(x, 3)} V</span><span class="li">i<sub>C</sub> = ${fmt(y, 3)} A</span>`
+      : `<span style="color:var(--f-final)">i<sub>L</sub> = ${fmt(x, 3)} A</span><span class="lv">v<sub>L</sub> = ${fmt(y, 3)} V</span>`;
+    const i = BANC.modo === 'RC' ? y : x;
+    const max = 5;
+    for (const f of $$('#banc-esq .esq-fluxo')) {
+      const vel = Math.abs(i) / max;
+      f.style.opacity = vel < 0.03 ? 0 : 0.85;
+      f.style.animationDuration = (0.9 / (0.15 + 0.85 * vel)).toFixed(2) + 's';
+    }
+  }
+  BANC.raf = requestAnimationFrame(bancadaPasso);
+}
+function bancadaIniciar() {
+  if (!$('#bancada')) return;
+  bancadaDesenhar();
+  if (!BANC.raf) { BANC.ult = 0; BANC.raf = requestAnimationFrame(bancadaPasso); }
+}
+
+/* ---------- laboratório da curva de 1ª ordem ---------- */
+function curvaHTML() {
+  const ctl = (id, rot, min, max, passo, val) => `<label class="ctl"><span>${rot}<b id="v-${id}">${fmt(val)}</b></span><input type="range" id="${id}" min="${min}" max="${max}" step="${passo}" value="${val}" data-input="curva"></label>`;
+  return `<div class="lab" id="lab-curva">
+    <h4>Laboratório da curva</h4>
+    <div class="controles">${ctl('c-xm', 'x(0⁻)', -10, 10, 0.5, 6)}${ctl('c-x0', 'x(0⁺)', -10, 10, 0.5, 6)}${ctl('c-xi', 'x(∞)', -10, 10, 0.5, 4)}${ctl('c-tau', 'τ (s)', 0.1, 3, 0.1, 1)}</div>
+    <div id="curva-osc"></div>
+    <div class="saida-lab" id="curva-txt"></div>
+  </div>`;
+}
+function curvaAtualizar() {
+  const v = id => parseFloat($('#' + id).value);
+  const xm = v('c-xm'), x0 = v('c-x0'), xi = v('c-xi'), tau = v('c-tau');
+  for (const id of ['c-xm', 'c-x0', 'c-xi', 'c-tau']) $('#v-' + id).textContent = fmt(v(id));
+  const f = t => xi + (x0 - xi) * Math.exp(-t / tau);
+  $('#curva-osc').innerHTML = osciloscopio({ curvas: [{ f }], t0: -0.6 * tau, t1: 5.2 * tau, antes: xm, rotY: 'x', marcas: { tau, assintota: xi, inicio: x0, tangente: { x0, xinf: xi, tau } } });
+  const B = x0 - xi;
+  $('#curva-txt').innerHTML = `$x(t) = ${fmtTex(xi)} ${B < 0 ? '-' : '+'} ${fmtTex(Math.abs(B))}\\,e^{-t/${fmtTex(tau)}}$ <br>Em $t = \\tau$: $x = ${fmtTex(f(tau))}$ (63% do caminho). ${Math.abs(xm - x0) > 1e-9 ? 'Repare no salto em t = 0: esta grandeza não é v<sub>C</sub> nem i<sub>L</sub>.' : ''}`;
+  formulas($('#curva-txt'));
+}
+
+/* ---------- laboratório RLC ---------- */
+function rlcHTML() {
+  return `<div class="lab" id="lab-rlc">
+    <h4>Laboratório RLC</h4>
+    <div class="sim-tipos" role="group" aria-label="Ligação">
+      <button data-acao="rlc-modo" data-valor="serie" aria-pressed="true">Série</button>
+      <button data-acao="rlc-modo" data-valor="paralelo" aria-pressed="false">Paralelo</button>
+    </div>
+    <div class="controles">
+      <label class="ctl"><span>R<b id="v-r-R"></b></span><input type="range" id="r-R" min="0" max="3" step="0.01" value="1.3" data-input="rlc"></label>
+      <label class="ctl"><span>L<b id="v-r-L"></b></span><input type="range" id="r-L" min="-1" max="1" step="0.01" value="0" data-input="rlc"></label>
+      <label class="ctl"><span>C<b id="v-r-C"></b></span><input type="range" id="r-C" min="-5" max="-1" step="0.01" value="-3" data-input="rlc"></label>
+    </div>
+    <div class="lab-duas"><div id="rlc-osc"></div><div><div id="rlc-plano"></div><div class="saida-lab" id="rlc-txt"></div></div></div>
+  </div>`;
+}
+function rlcAtualizar() {
+  const lab = $('#lab-rlc');
+  const modo = $('[data-acao=rlc-modo][aria-pressed=true]', lab).dataset.valor;
+  const bonito = v => +(10 ** parseFloat(v)).toPrecision(2);
+  const R = bonito($('#r-R').value), L = bonito($('#r-L').value), C = bonito($('#r-C').value);
+  $('#v-r-R').textContent = fmt(R, 3) + ' Ω';
+  $('#v-r-L').textContent = fmt(L, 3) + ' H';
+  $('#v-r-C').textContent = fmt(C * 1e3, 3) + ' mF';
+  const alfa = modo === 'serie' ? R / (2 * L) : 1 / (2 * R * C), w0 = 1 / Math.sqrt(L * C);
+  // tensão no capacitor, começando com 10 V e corrente zero no indutor
+  const dx0 = modo === 'serie' ? 0 : -10 / (R * C);
+  const sol = MOTOR.solucao2(alfa, w0, 0, 10, dx0);
+  $('#rlc-osc').innerHTML = grafico2(sol, 'vC', 'V');
+  const nome = { super: 'Supercrítico', critico: 'Crítico', sub: 'Subamortecido' }[sol.tipo];
+  // plano s
+  const Wp = 260, Hp = 190;
+  const esc0 = Math.max(Math.abs(sol.s1), Math.abs(sol.s2), sol.wd || 0, w0) * 1.25;
+  const PX = s => Wp - 22 - (-s) / esc0 * (Wp - 40), PY = w => Hp / 2 - w / esc0 * (Hp / 2 - 14);
+  const raizes = sol.tipo === 'sub' ? [[sol.s1, sol.wd], [sol.s1, -sol.wd]] : [[sol.s1, 0], [sol.s2, 0]];
+  let plano = `<line class="osc-eixo" x1="0" y1="${Hp / 2}" x2="${Wp}" y2="${Hp / 2}"/><line class="osc-eixo" x1="${PX(0)}" y1="0" x2="${PX(0)}" y2="${Hp}"/>`;
+  plano += `<circle cx="${PX(0)}" cy="${Hp / 2}" r="${(w0 / esc0) * (Hp / 2 - 14)}" class="osc-guia" fill="none"/>`;
+  for (const [s, w] of raizes) plano += `<path d="M ${PX(s) - 6} ${PY(w) - 6} L ${PX(s) + 6} ${PY(w) + 6} M ${PX(s) + 6} ${PY(w) - 6} L ${PX(s) - 6} ${PY(w) + 6}" stroke="var(--traco)" stroke-width="2.6"/>`;
+  plano += `<text class="osc-txt" x="${Wp - 6}" y="${Hp / 2 - 6}" text-anchor="end">Re</text><text class="osc-txt" x="${PX(0) + 6}" y="14">Im</text>`;
+  $('#rlc-plano').innerHTML = `<div class="osc plano-s"><svg viewBox="0 0 ${Wp} ${Hp}" role="img" aria-label="Raízes no plano s">${plano}</svg><div class="osc-legenda"><span>raízes (×) no plano s</span></div></div>`;
+  $('#rlc-txt').innerHTML = `<span class="selo-amort sa-${sol.tipo}">${nome}</span><br>$\\alpha = ${fmtTex(alfa)}$, $\\omega_0 = ${fmtTex(w0)}$<br>${sol.tipo === 'sub' ? `$s = ${fmtTex(sol.s1)} \\pm j${fmtTex(sol.wd)}$` : sol.tipo === 'critico' ? `$s = ${fmtTex(sol.s1)}$ (dupla)` : `$s_1 = ${fmtTex(sol.s1)}$, $s_2 = ${fmtTex(sol.s2)}$`}`;
+  formulas($('#rlc-txt'));
+}
+
+/* ---------- resolvedor de EDO de 2ª ordem ---------- */
+function edoHTML() {
+  const inp = (id, v, rot) => `<input type="text" id="${id}" value="${v}" aria-label="${rot}" inputmode="decimal">`;
+  return `<div class="lab" id="lab-edo">
+    <h4>Resolvedor passo a passo</h4>
+    <div class="edo-entrada">x'' + ${inp('e-a', 2, 'a')} x' + ${inp('e-b', 5, 'b')} x = ${inp('e-K', 10, 'K')}</div>
+    <div class="edo-entrada" style="margin-top:8px">x(0) = ${inp('e-x0', 4, 'x(0)')} &nbsp; x'(0) = ${inp('e-dx0', -2, "x'(0)")}</div>
+    <div class="item-acoes" style="margin-left:0"><button class="prim" data-acao="edo-resolver">Resolver</button>
+      <button data-acao="edo-exemplo" data-valor="5,6,24,12,-12">P3 2024.1</button><button data-acao="edo-exemplo" data-valor="40,400,0,0,-9.6">P3 2026.1</button></div>
+    <div class="resolucao-edo" id="edo-saida"></div>
+  </div>`;
+}
+function edoResolver() {
+  const g = id => parseNum($('#' + id).value);
+  const a = g('e-a'), b = g('e-b'), K = g('e-K'), x0 = g('e-x0'), dx0 = g('e-dx0');
+  if ([a, b, K, x0, dx0].some(v => !Number.isFinite(v)) || b <= 0 || a < 0) {
+    $('#edo-saida').innerHTML = '<p class="retorno nao">Preencha todos os campos com números. O coeficiente de x precisa ser positivo, e o de x′ não pode ser negativo.</p>';
+    return;
+  }
+  $('#edo-saida').innerHTML = resolucaoEdo({ a, b, K, x0, dx0, nome: 'x', un: '' }).map((p, k) => `<div class="passo"><span class="pn">Passo ${k + 1}</span>${p}</div>`).join('') + grafico2(MOTOR.solucao2(a / 2, Math.sqrt(b), K / b, x0, dx0), 'x', '');
+  formulas($('#edo-saida'));
+}
+/* Gera o texto da resolução de x'' + a x' + b x = K. */
+function resolucaoEdo({ a, b, K, x0, dx0, nome = 'x', un = '' }) {
+  const F = fmtTex;
+  const alfa = a / 2, w0 = Math.sqrt(b), xf = K / b;
+  const s = MOTOR.solucao2(alfa, w0, xf, x0, dx0);
+  const passos = [];
+  passos.push(`Equação característica: $s^2 + ${F(a)}s + ${F(b)} = 0$. Então $\\alpha = \\frac{${F(a)}}{2} = ${F(alfa)}$ e $\\omega_0 = \\sqrt{${F(b)}} = ${F(w0)}$.`);
+  if (s.tipo === 'super') passos.push(`$\\alpha > \\omega_0$: **supercrítico**. Raízes reais: $s = -${F(alfa)} \\pm \\sqrt{${F(alfa * alfa)} - ${F(b)}}$, ou seja, $s_1 = ${F(s.s1)}$ e $s_2 = ${F(s.s2)}$.`);
+  if (s.tipo === 'critico') passos.push(`$\\alpha = \\omega_0$: **crítico**. Raiz dupla $s = ${F(-alfa)}$.`);
+  if (s.tipo === 'sub') passos.push(`$\\alpha < \\omega_0$: **subamortecido**. $\\omega_d = \\sqrt{${F(b)} - ${F(alfa * alfa)}} = ${F(s.wd)}$, raízes $s = ${F(-alfa)} \\pm j${F(s.wd)}$.`);
+  passos.push(`Resposta forçada (derivadas de constante são zero): $${F(b)}\\,${nome}_f = ${F(K)} \\Rightarrow ${nome}_f = ${F(xf)}$.`);
+  const y0 = x0 - xf;
+  if (s.tipo === 'super') {
+    passos.push(`Forma: $${nome}(t) = ${F(xf)} + A_1e^{${F(s.s1)}t} + A_2e^{${F(s.s2)}t}$. Condições: $A_1 + A_2 = ${F(x0)} - ${F(xf)} = ${F(y0)}$ e $${F(s.s1)}A_1 ${s.s2 < 0 ? '-' : '+'} ${F(Math.abs(s.s2))}A_2 = ${F(dx0)}$.`);
+    passos.push(`Resolvendo: $A_1 = ${F(s.A1)}$ e $A_2 = ${F(s.A2)}$.<br>$${nome}(t) = ${F(xf)} ${s.A1 < 0 ? '-' : '+'} ${F(Math.abs(s.A1))}e^{${F(s.s1)}t} ${s.A2 < 0 ? '-' : '+'} ${F(Math.abs(s.A2))}e^{${F(s.s2)}t}${unTex(un)}$`);
+  } else if (s.tipo === 'critico') {
+    passos.push(`Forma: $${nome}(t) = ${F(xf)} + (A_1 + A_2t)e^{${F(-alfa)}t}$. Em $t = 0$: $A_1 = ${F(x0)} - ${F(xf)} = ${F(s.A1)}$.`);
+    passos.push(`Derivada em 0: $A_2 - ${F(alfa)}A_1 = ${F(dx0)} \\Rightarrow A_2 = ${F(s.A2)}$.<br>$${nome}(t) = ${F(xf)} + (${F(s.A1)} ${s.A2 < 0 ? '-' : '+'} ${F(Math.abs(s.A2))}t)\\,e^{${F(-alfa)}t}${unTex(un)}$`);
+  } else {
+    passos.push(`Forma: $${nome}(t) = ${F(xf)} + e^{${F(-alfa)}t}(B_1\\cos ${F(s.wd)}t + B_2\\sin ${F(s.wd)}t)$. Em $t = 0$: $B_1 = ${F(x0)} - ${F(xf)} = ${F(s.B1)}$.`);
+    passos.push(`Derivada em 0: $-${F(alfa)}B_1 + ${F(s.wd)}B_2 = ${F(dx0)} \\Rightarrow B_2 = ${F(s.B2)}$.<br>$${nome}(t) = ${F(xf)} + e^{${F(-alfa)}t}(${F(s.B1)}\\cos ${F(s.wd)}t ${s.B2 < 0 ? '-' : '+'} ${F(Math.abs(s.B2))}\\sin ${F(s.wd)}t)${unTex(un)}$`);
+  }
+  return passos;
+}
+
+/* ---------- questões: campos, escolhas e passos ---------- */
+const ITENS = new Map();   // chave → { item, ctx }
+function contexto(q) {
+  const c = {};
+  if (q.circ || q.circuito) { c.circ = q.circ || CIRCUITOS[q.circuito]; c.res = analise(c.circ); }
+  if (q.edo) c.edo = q.edo;
+  return c;
+}
+function valorDe(v, ctx) { return typeof v === 'function' ? v(ctx) : v; }
+
+function questaoHTML(q, chaveQ, titulo) {
+  const ctx = contexto(q);
+  let figura = '';
+  if (ctx.circ) figura = explorador(ctx.circ, q.anot || [], q.ordem);
+  if (q.edo) figura = `<div class="formula texto">$$\\frac{d^2${q.edo.nome}}{dt^2} + ${fmtTex(q.edo.a)}\\frac{d${q.edo.nome}}{dt} + ${fmtTex(q.edo.b)}\\,${q.edo.nome} = ${fmtTex(q.edo.K)}$$</div>`;
+  if (q.rlc) figura = `<div class="explorador"><div class="esquema">${svgCircuito(CIRC_RLC(q.rlc), { fase: 'enunciado' })}</div></div>`;
+  return `<section class="questao" id="q-${chaveQ}">
+    <h2>${titulo}</h2>${q.pontos ? `<span class="pts">${q.pontos} pontos</span>` : ''}
+    <div class="enunciado">${inline(q.enunciado)}</div>
+    ${figura}
+    ${q.itens.map(it => itemHTML(it, ctx, `${chaveQ}:${it.l || 'u'}`)).join('')}
+  </section>`;
+}
+function itemHTML(it, ctx, chave) {
+  ITENS.set(chave, { it, ctx });
+  const feito = !!estado.acertos[chave];
+  const campos = it.campos ? `<div class="campos">${it.forma ? `<span class="forma">$${it.forma}$</span>` : ''}${it.campos.map((c, k) => `<div class="campo"><label for="in-${chave}-${k}">$${c.rot}$ =</label><input type="text" id="in-${chave}-${k}" inputmode="decimal" autocomplete="off" data-k="${k}" aria-describedby="ret-${chave}"><span class="un">${esc(c.un || '')}</span></div>`).join('')}</div>` : '';
+  const escolha = it.escolha ? `<div class="escolhas" role="group" aria-label="Escolha">${it.escolha.opcoes.map((o, k) => `<button data-acao="escolher" data-valor="${k}">${esc(o)}</button>`).join('')}</div>` : '';
+  const conferir = it.campos ? `<button class="prim" data-acao="conferir">Conferir</button>` : '';
+  const verRes = `<button data-acao="passo">${it.grafico ? 'Ver o gráfico e a resolução' : 'Ver resolução passo a passo'}</button>`;
+  return `<div class="item" data-item="${esc(chave)}">
+    <div class="item-p"><span class="l">${it.l ? it.l + ')' : ''}</span><div>${inline(it.txt)}</div><span class="ip ${feito ? 'feito' : ''}">${feito ? 'feito ✓' : (it.pts ? it.pts + ' pt' : '')}</span></div>
+    ${escolha}${campos}
+    <div class="item-acoes">${conferir}${verRes}</div>
+    <div class="retorno" id="ret-${esc(chave)}" role="status"></div>
+    <div class="passos"></div>
+  </div>`;
+}
+function itemDe(botao) {
+  const box = botao.closest('.item');
+  return { box, chave: box.dataset.item, ...ITENS.get(box.dataset.item) };
+}
+function marcarFeito(box, chave) {
+  if (!chave.startsWith('sim')) { estado.acertos[chave] = true; save(); }
+  const ip = $('.ip', box);
+  ip.textContent = 'feito ✓';
+  ip.classList.add('feito');
+}
+function itemCompleto(box, it) {
+  const camposOk = !it.campos || $$('.campo input', box).every(i => i.classList.contains('certo'));
+  const escOk = !it.escolha || !!$('.escolhas .certa', box);
+  return camposOk && escOk;
+}
+function conferir(_, botao) {
+  const { box, chave, it, ctx } = itemDe(botao);
+  let ok = 0;
+  const ins = $$('.campo input', box);
+  ins.forEach((inp, k) => {
+    const certo = confere(parseNum(inp.value), valorDe(it.campos[k].valor, ctx));
+    inp.classList.toggle('certo', certo);
+    inp.classList.toggle('errado', !certo && inp.value.trim() !== '');
+    if (certo) ok++;
+  });
+  const ret = $('.retorno', box);
+  const vazio = ins.some(i => !i.value.trim());
+  if (ok === ins.length) {
+    ret.className = 'retorno ok';
+    ret.textContent = it.escolha && !$('.escolhas .certa', box) ? 'Valores certos! Falta escolher o tipo.' : 'Certo!';
+    if (chave.startsWith('sim')) SIM.acertos++;
+  } else {
+    ret.className = 'retorno nao';
+    ret.textContent = vazio ? 'Preencha todos os campos. Pode usar vírgula, fração (4/3) ou prefixo (2m).' : `${ok} de ${ins.length} certo${ins.length > 1 ? 's' : ''}. Confira o sinal (a seta do desenho manda) e a unidade, ou veja o passo a passo.`;
+  }
+  if (itemCompleto(box, it)) marcarFeito(box, chave);
+  atualizarPlacar();
+}
+function escolher(valor, botao) {
+  const { box, chave, it, ctx } = itemDe(botao);
+  const certa = valorDe(it.escolha.certa, ctx);
+  const k = Number(valor);
+  if (k === certa) {
+    botao.classList.add('certa');
+    $$('.escolhas button', box).forEach(b => { if (b !== botao) b.disabled = true; });
+    if (itemCompleto(box, it)) marcarFeito(box, chave);
+    if (!it.campos) { const ret = $('.retorno', box); ret.className = 'retorno ok'; ret.textContent = 'Certo!'; }
+  } else {
+    botao.classList.add('errada');
+    botao.disabled = true;
+  }
+}
+function proximoPasso(_, botao) {
+  const { box, chave, it, ctx } = itemDe(botao);
+  const lista = $('.passos', box);
+  const n = lista.children.length;
+  const passos = it.passos || [];
+  if (n < passos.length) {
+    const p = passos[n];
+    const div = document.createElement('div');
+    div.className = 'passo';
+    let fig = '';
+    if (p.fase && ctx.circ) {
+      const q = questaoDeItem(box);
+      fig = `<div class="esquema">${svgCircuito(ctx.circ, { fase: p.fase, res: ctx.res, anot: q ? q.anot || [] : [] })}</div>${valoresFase(p.fase, ctx.res, q ? q.anot || [] : [])}`;
+      if (p.fase === 'tau') fig += `<div class="valores" style="color:var(--f-tau)"><span>R<sub>eq</sub> = ${fmt(ctx.res.req)} Ω</span><span>τ = ${fmt(ctx.res.tau)} s</span></div>`;
+    }
+    div.innerHTML = `<span class="pn">Passo ${n + 1} de ${passos.length}${p.fase ? ` <span class="rotulo-fase rf-${p.fase === 'depois' ? 'tau' : p.fase}">${NOME_FASE[p.fase]}</span>` : ''}</span>${fig}${md(p.txt)}`;
+    lista.appendChild(div);
+    formulas(div);
+  }
+  if (lista.children.length >= passos.length) {
+    botao.remove();
+    const fim = document.createElement('div');
+    let html = '';
+    if (it.campos) html += `<div class="resposta-final">Resposta: ${it.campos.map(c => `$${c.rot} = ${fmtTex(valorDe(c.valor, ctx))}${unTex(c.un)}$`).join(' &nbsp; ')}</div>`;
+    if (it.escolha) html += `<div class="resposta-final">Resposta: ${esc(it.escolha.opcoes[valorDe(it.escolha.certa, ctx)])}</div>`;
+    if (it.grafico) html += grafico1(ctx.res, it.grafico);
+    if (it.grafico2) html += grafico2(MOTOR.solucao2(ctx.res.alfa, ctx.res.w0, MOTOR.medir(ctx.res.final, it.grafico2), MOTOR.medir(ctx.res.inicial, it.grafico2), MOTOR.derivada(ctx.res, it.grafico2)), it.grafico2.nome, it.grafico2.un);
+    if (it.graficoEdo) html += grafico2(MOTOR.solucao2(ctx.edo.a / 2, Math.sqrt(ctx.edo.b), ctx.edo.K / ctx.edo.b, ctx.edo.x0, ctx.edo.dx0), ctx.edo.nome, ctx.edo.un);
+    fim.innerHTML = html;
+    lista.appendChild(fim);
+    formulas(fim);
+    if (it.grafico) marcarFeito(box, chave);
+  }
+}
+function questaoDeItem(box) {
+  const sec = box.closest('.questao');
+  return sec ? sec._q : null;
+}
+
+/* ---------- simulado: questões novas com os mesmos circuitos ---------- */
+const SIM = { tipo: 'primeira', q: null, n: 0, acertos: 0 };
+const sorteia = lista => lista[Math.floor(Math.random() * lista.length)];
+const POOL = { R: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20], V: [2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 18, 20, 24], I: [1, 2, 3, 4, 5, 6, 8], C: [0.5, 1, 2, 3, 4], Cm: [1, 2, 4, 5, 10], L: [0.5, 1, 1.5, 2, 3, 4] };
+const rotDe = (t, v) => t === 'R' ? `${fmt(v)} Ω` : t === 'V' ? `${fmt(v)} V` : t === 'I' ? `${fmt(v)} A` : t === 'L' ? `${fmt(v)} H` : v < 0.01 ? `${fmt(v * 1e3)} mF` : `${fmt(v)} F`;
+function sortearCircuito(id) {
+  const base = CIRCUITOS[id];
+  const circ = JSON.parse(JSON.stringify(base));
+  for (const e of circ.elementos) {
+    if (!('valor' in e)) continue;
+    if (e.t === 'R') e.valor = sorteia(POOL.R);
+    if (e.t === 'V') e.valor = sorteia(POOL.V);
+    if (e.t === 'I') e.valor = sorteia(POOL.I);
+    if (e.t === 'L') e.valor = sorteia(POOL.L);
+    if (e.t === 'C') e.valor = e.valor < 0.01 ? sorteia(POOL.Cm) * 1e-3 : sorteia(POOL.C);
+    e.rot = rotDe(e.t, e.valor);
+  }
+  return circ;
+}
+function questaoProva(circId) {
+  for (const p of PROVAS) for (const q of p.questoes) if (q.circuito === circId) return { p, q };
+  return null;
+}
+const PRIMEIRA = ['q261a', 'q252a', 'q252b', 'q251a', 'q251b', 'q241a', 'q241b', 'q242a', 'q242b'];
+const SEGUNDA = ['q261b', 'q251c'];
+function simPrimeira() {
+  const id = sorteia(PRIMEIRA);
+  const { p, q: orig } = questaoProva(id);
+  let circ, res, arm, tent = 0;
+  do {
+    circ = sortearCircuito(id);
+    res = MOTOR.analisar(circ);
+    arm = res.arm[0];
+    tent++;
+    const m = { el: arm.id, q: arm.t === 'C' ? 'v' : 'i' };
+    const a = MOTOR.medir(res.inicial, m), b = MOTOR.medir(res.final, m);
+    if (Math.abs(a - b) > 0.08 * Math.max(Math.abs(a), Math.abs(b), 0.5) && res.tau > 1e-6) break;
+  } while (tent < 30);
+  const anot = orig.anot;
+  const qArm = arm.t === 'C' ? 'v' : 'i';
+  const anArm = anot.find(a => a.el === arm.id && a.t === qArm) || { txt: arm.t === 'C' ? 'v_C' : 'i_L', el: arm.id, t: qArm };
+  const mA = { el: anArm.el, q: anArm.t };
+  const outras = anot.filter(a => a !== anArm);
+  const outra = outras.length ? sorteia(outras) : { el: arm.id, t: arm.t === 'C' ? 'i' : 'v', txt: arm.t === 'C' ? 'i_C' : 'v_L' };
+  const nm = t => t.replace(/_(\w+)/, '_{$1}');
+  const un = a => a.t === 'i' ? 'A' : 'V';
+  const mO = { el: outra.el, q: outra.t };
+  const memoria = arm.t === 'C' ? 'o capacitor é **aberto**' : 'o indutor é **curto**';
+  const itens = [
+    { l: 'a', txt: T`Calcule $${nm(anArm.txt)}(0^-)$.`, campos: [{ rot: T`${nm(anArm.txt)}(0^-)`, un: un(anArm), valor: med('antes', anArm.el, anArm.t) }],
+      passos: [{ fase: 'antes', txt: T`Antes da chave, em regime, ${memoria}. Resolva o circuito resistivo da foto: $${nm(anArm.txt)}(0^-) = ${fmtTex(MOTOR.medir(res.antes, mA))}$ ${un(anArm)}.` }] },
+    { l: 'b', txt: T`Calcule $${nm(outra.txt)}(0^+)$.`, campos: [{ rot: T`${nm(outra.txt)}(0^+)`, un: un(outra), valor: med('inicial', outra.el, outra.t) }],
+      passos: [{ fase: 'inicial', txt: T`Em $0^+$ a chave está na posição nova e ${arm.t === 'C' ? 'o capacitor vira uma fonte de tensão' : 'o indutor vira uma fonte de corrente'} de valor ${fmt(res.estado[arm.id])} ${arm.t === 'C' ? 'V' : 'A'}. Resolva a foto e confira o sentido da seta: $${nm(outra.txt)}(0^+) = ${fmtTex(MOTOR.medir(res.inicial, mO))}$ ${un(outra)}.` }] },
+    { l: 'c', txt: T`Calcule $${nm(anArm.txt)}(\infty)$.`, campos: [{ rot: T`${nm(anArm.txt)}(\infty)`, un: un(anArm), valor: med('final', anArm.el, anArm.t) }],
+      passos: [{ fase: 'final', txt: T`Regime de novo, com a chave na posição nova: ${memoria}. $${nm(anArm.txt)}(\infty) = ${fmtTex(MOTOR.medir(res.final, mA))}$ ${un(anArm)}.` }] },
+    { l: 'd', txt: T`Calcule a constante de tempo $\tau$ para $t > 0$.`, campos: [{ rot: T`\tau`, un: 's', valor: TAU }],
+      passos: [{ fase: 'tau', txt: T`Fontes zeradas, olhando dos terminais: $R_{eq} = ${fmtTex(res.req)}\ \Omega$. ${arm.t === 'C' ? T`$\tau = R_{eq}C = ${fmtTex(res.req)} \cdot ${fmtTex(arm.valor)} = ${fmtTex(res.tau)}$ s.` : T`$\tau = \frac{L}{R_{eq}} = \frac{${fmtTex(arm.valor)}}{${fmtTex(res.req)}} = ${fmtTex(res.tau)}$ s.`}` }] },
+    { l: 'e', txt: T`Escreva $${nm(anArm.txt)}(t)$ para $t > 0$ no formato $A + B\,e^{-t/\tau}$.`, campos: expr1(anArm.el, anArm.t, nm(anArm.txt), un(anArm)), grafico: null,
+      passos: [{ txt: T`$${nm(anArm.txt)}(t) = ${fmtTex(MOTOR.medir(res.final, mA))} + \big(${fmtTex(MOTOR.medir(res.inicial, mA))} - ${fmtTex(MOTOR.medir(res.final, mA))}\big)e^{-t/${fmtTex(res.tau)}}$.` }] },
+  ];
+  itens[4].grafico = { el: anArm.el, q: anArm.t, nome: anArm.txt, un: un(anArm) };
+  return { titulo: `Versão nova de: ${p.nome}, ${orig.n}ª questão`, q: { circ, anot, enunciado: orig.enunciado, itens } };
+}
+function simSegunda() {
+  const id = sorteia(SEGUNDA);
+  const { p, q: orig } = questaoProva(id);
+  let circ, res, tent = 0;
+  do {
+    circ = sortearCircuito(id);
+    for (const e of circ.elementos) if (e.t === 'C') { e.valor = sorteia([1e-3, 2e-3, 5e-3, 0.01, 0.05, 0.1, 1 / 9, 0.25]); e.rot = e.valor === 1 / 9 ? '1/9 F' : rotDe('C', e.valor); }
+    res = MOTOR.analisar(circ);
+    tent++;
+  } while (tent < 20 && Math.abs(MOTOR.derivada(res, { el: 'L', q: 'i' })) < 1e-6);
+  const am = MOTOR.amortecimento(res.alfa, res.w0);
+  const s = sol2('L', 'i')({ res });
+  const forma = { super: T`i(t) = A_1e^{s_1t} + A_2e^{s_2t}`, critico: T`i(t) = (A_1 + A_2t)\,e^{-\alpha t}`, sub: T`i(t) = e^{-\alpha t}(B_1\cos\omega_dt + B_2\sin\omega_dt)` }[am.tipo];
+  const consts = am.tipo === 'sub' ? [['B_1', s.B1], ['B_2', s.B2]] : [['A_1', s.A1], ['A_2', s.A2]];
+  const itens = [
+    { l: 'a', txt: T`Calcule $i(0^+)$ e $v(0^+)$.`, campos: [{ rot: T`i(0^+)`, un: 'A', valor: med('inicial', 'L', 'i') }, { rot: T`v(0^+)`, un: 'V', valor: med('inicial', 'C', 'v') }],
+      passos: [{ fase: 'antes', txt: T`Regime antes da chave: capacitor aberto, indutor curto. Continuidade: $i(0^+) = ${fmtTex(res.estado.L)}$ A e $v(0^+) = ${fmtTex(res.estado.C)}$ V.` }] },
+    { l: 'b', txt: T`Calcule $\dfrac{di}{dt}(0^+)$.`, campos: [{ rot: T`\frac{di}{dt}(0^+)`, un: 'A/s', valor: der('L', 'i') }],
+      passos: [{ fase: 'inicial', txt: T`Na malha em $0^+$, ache $v_L(0^+) = ${fmtTex(res.inicial.el.L.v)}$ V pela LTK. Então $\frac{di}{dt}(0^+) = \frac{v_L(0^+)}{L} = ${fmtTex(MOTOR.derivada(res, { el: 'L', q: 'i' }))}$ A/s.` }] },
+    { l: 'c', txt: T`Caracterize a resposta natural (informe também $\alpha$ e $\omega_0$).`, escolha: { opcoes: AMORT, certa: idxAmort(am.tipo) }, campos: [{ rot: T`\alpha`, un: '1/s', valor: ALFA }, { rot: T`\omega_0`, un: 'rad/s', valor: W0 }],
+      passos: [{ fase: 'depois', txt: T`RLC série para $t > 0$: some os resistores da malha. $\alpha = \frac{R}{2L} = ${fmtTex(res.alfa)}$ e $\omega_0 = \frac{1}{\sqrt{LC}} = ${fmtTex(res.w0)}$: **${AMORT[idxAmort(am.tipo)].toLowerCase()}**.` }] },
+    { l: 'd', txt: T`Obtenha a solução geral de $i(t)$ (a resposta forçada é zero).`, forma, campos: consts.map(([r, v]) => ({ rot: r, un: '', valor: v })), grafico2: { el: 'L', q: 'i', nome: 'i', un: 'A' },
+      passos: [{ txt: T`Use $i(0^+)$ e $\frac{di}{dt}(0^+)$ com a tabela da etapa 8. ${consts.map(([r, v]) => `$${r} = ${fmtTex(v)}$`).join(', ')}.` }] },
+  ];
+  return { titulo: `Versão nova de: ${p.nome}, ${orig.n}ª questão`, q: { circ, anot: orig.anot, ordem: 2, enunciado: orig.enunciado, itens } };
+}
+function simEdo() {
+  const tipo = sorteia(['super', 'critico', 'sub']);
+  let a, b;
+  if (tipo === 'super') { const p = 1 + Math.floor(Math.random() * 4); const q2 = p + 1 + Math.floor(Math.random() * 3); a = p + q2; b = p * q2; }
+  if (tipo === 'critico') { const p = 1 + Math.floor(Math.random() * 5); a = 2 * p; b = p * p; }
+  if (tipo === 'sub') { const s = 1 + Math.floor(Math.random() * 3); const w = 1 + Math.floor(Math.random() * 4); a = 2 * s; b = s * s + w * w; }
+  const xf = sorteia([0, 1, 2, 3, 4, 5, 6, 8, 10, -2]);
+  const K = b * xf, x0 = xf + sorteia([-6, -4, -2, 2, 3, 4, 6, 8]), dx0 = sorteia([-12, -8, -6, -4, -2, 0, 2, 4]);
+  const nome = sorteia(['v', 'i']), un = nome === 'v' ? 'V' : 'A';
+  const edo = { a, b, K, x0, dx0, nome, un };
+  const s = MOTOR.solucao2(a / 2, Math.sqrt(b), xf, x0, dx0);
+  const consts = s.tipo === 'sub' ? [['B_1', s.B1], ['B_2', s.B2]] : [['A_1', s.A1], ['A_2', s.A2]];
+  const forma = { super: T`${nome}(t) = ${nome}_f + A_1e^{s_1t} + A_2e^{s_2t}`, critico: T`${nome}(t) = ${nome}_f + (A_1 + A_2t)\,e^{-\alpha t}`, sub: T`${nome}(t) = ${nome}_f + e^{-\alpha t}(B_1\cos\omega_dt + B_2\sin\omega_dt)` }[s.tipo];
+  const passos = resolucaoEdo(edo);
+  const itens = [
+    { l: 'a', txt: T`Caracterize a resposta natural (amortecimento) e informe $\alpha$ e $\omega_0$.`, escolha: { opcoes: AMORT, certa: idxAmort(s.tipo) }, campos: [{ rot: T`\alpha`, un: '1/s', valor: a / 2 }, { rot: T`\omega_0`, un: 'rad/s', valor: Math.sqrt(b) }], passos: passos.slice(0, 2).map(txt => ({ txt })) },
+    { l: 'b', txt: T`Obtenha a resposta forçada.`, campos: [{ rot: T`${nome}_f`, un, valor: xf }], passos: [{ txt: passos[2] }] },
+    { l: 'c', txt: T`Obtenha a solução geral.`, forma, campos: consts.map(([r, v]) => ({ rot: r, un, valor: v })), graficoEdo: true, passos: passos.slice(3).map(txt => ({ txt })) },
+  ];
+  return { titulo: 'Equação de 2ª ordem', q: { edo, enunciado: T`A grandeza $${nome}(t)$ de um circuito de segunda ordem obedece à equação abaixo, com $${nome}(0) = ${fmtTex(x0)}$ ${un} e $\frac{d${nome}}{dt}(0) = ${fmtTex(dx0)}$ ${un}/s.`, itens } };
+}
+function simRlc() {
+  const serie = Math.random() < 0.6;
+  let R, L, C;
+  if (Math.random() < 0.3) {
+    [L, C] = sorteia([[1, 1e-4], [2.5, 1e-3], [4, 0.01], [1, 1e-6], [0.5, 2e-3]]);
+    R = serie ? 2 * Math.sqrt(L / C) : 0.5 * Math.sqrt(L / C);
+  } else {
+    R = sorteia([1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000]);
+    L = sorteia([0.1, 0.2, 0.5, 1, 2, 4]);
+    C = sorteia([1e-6, 10e-6, 100e-6, 1e-3, 10e-3, 0.1]);
+  }
+  const alfa = serie ? R / (2 * L) : 1 / (2 * R * C), w0 = 1 / Math.sqrt(L * C);
+  const am = MOTOR.amortecimento(alfa, w0);
+  const Ct = C >= 1e-3 ? `${fmt(C * 1e3)}\\ \\text{mF}` : `${fmt(C * 1e6)}\\ \\mu\\text{F}`;
+  const itens = [{
+    l: '', txt: T`Determine $\alpha$, $\omega_0$ e o tipo de amortecimento.`, escolha: { opcoes: AMORT, certa: idxAmort(am.tipo) },
+    campos: [{ rot: T`\alpha`, un: '1/s', valor: alfa }, { rot: T`\omega_0`, un: 'rad/s', valor: w0 }],
+    passos: [
+      { txt: serie ? T`Série: $\alpha = \frac{R}{2L} = \frac{${fmtTex(R)}}{2 \cdot ${fmtTex(L)}} = ${fmtTex(alfa)}\ \text{s}^{-1}$.` : T`Paralelo: $\alpha = \frac{1}{2RC} = \frac{1}{2 \cdot ${fmtTex(R)} \cdot ${fmtTex(C)}} = ${fmtTex(alfa)}\ \text{s}^{-1}$.` },
+      { txt: T`$\omega_0 = \frac{1}{\sqrt{LC}} = ${fmtTex(w0)}$ rad/s.` },
+      { txt: T`Comparando: **${AMORT[idxAmort(am.tipo)].toLowerCase()}**${am.tipo === 'sub' ? T`, com $\omega_d = ${fmtTex(am.wd)}$ rad/s` : ''}.` },
+    ],
+  }];
+  return { titulo: `RLC ${serie ? 'série' : 'paralelo'}`, q: { enunciado: T`Um circuito RLC em **${serie ? 'série' : 'paralelo'}** tem $R = ${fmtTex(R)}\ \Omega$, $L = ${fmtTex(L)}$ H e $C = ${Ct}$.`, itens } };
+}
+const CIRC_RLC = ({ R, L, C }) => ({
+  terra: [0, 3],
+  elementos: [
+    { id: 'R', t: 'R', a: [0, 0], b: [4, 0], valor: R, rot: R >= 1000 ? `${fmt(R / 1000)} kΩ` : `${fmt(R)} Ω` },
+    { id: 'L', t: 'L', a: [4, 0], b: [4, 3], valor: L, rot: `${fmt(L)} H` },
+    { id: 'C', t: 'C', a: [0, 3], b: [0, 0], valor: C, rot: C < 1e-6 ? `${fmt(C * 1e9)} nF` : `${fmt(C * 1e3)} mF` },
+    { t: 'W', p: [[0, 3], [4, 3]] },
+  ],
+});
+function novaSimulada() {
+  const g = { primeira: simPrimeira, segunda: simSegunda, edo: simEdo, rlc: simRlc }[SIM.tipo];
+  SIM.q = g();
+  SIM.n++;
+}
+function atualizarPlacar() { const p = $('#placar'); if (p) p.textContent = `${SIM.n} questões geradas nesta sessão, ${SIM.acertos} respostas certas`; }
+
+/* ---------- telas ---------- */
+function topo(ativo) {
+  const escuro = document.documentElement.dataset.theme === 'dark';
+  const link = (href, id, curto, longo = '') => `<a href="${href}"${ativo === id ? ' aria-current="page"' : ''}${id === 'inicio' ? ' class="so-largo"' : ''}>${curto}<span class="longo">${longo}</span></a>`;
+  return `<header class="topo"><div class="topo-in">
+    <a class="marca" href="#/"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="var(--tela)"/><path d="M5 9 H9 V21 H12 M12 21 C15 21 15 11 19 11 C21 11 22 13 25 13" fill="none" stroke="var(--traco)" stroke-width="2.2" stroke-linecap="round"/></svg><span>P3 de Circuitos CC</span></a>
+    <nav>${link('#/', 'inicio', 'Início')}${link('#/etapa/1', 'etapa', 'Etapas')}${link('#/prova/2026-1', 'prova', 'Provas')}${link('#/simulado', 'simulado', 'Simulado')}${link('#/formulas', 'formulas', 'Fórmulas')}
+      <button class="tema" data-acao="tema" aria-label="${escuro ? 'Usar tema claro' : 'Usar tema escuro'}">${escuro ? '☀' : '☾'}</button></nav>
+  </div></header>`;
+}
+function progressoProva(p) {
+  let total = 0, feitos = 0;
+  for (const q of p.questoes) for (const it of q.itens) { total++; if (estado.acertos[`${p.id}:${q.n}:${it.l || 'u'}`]) feitos++; }
+  return { total, feitos };
+}
+function telaInicio() {
+  const vistas = ETAPAS.filter(e => estado.vistas[e.n]).length;
+  const tot = PROVAS.reduce((s, p) => { const r = progressoProva(p); return { t: s.t + r.total, f: s.f + r.feitos }; }, { t: 0, f: 0 });
+  $('#app').innerHTML = topo('inicio') + `<main class="pagina">
+    <section class="abertura">
+      <div>
+        <h1>A P3 de Circuitos CC, uma chave de cada vez.</h1>
+        <p class="lead">Transitórios de 1ª e 2ª ordem do jeito que o Prof. Tiago Abud cobra: oito etapas visuais, as cinco últimas provas resolvidas passo a passo e um simulado que inventa questões novas.</p>
+        <div class="acoes"><a class="botao prim" href="#/etapa/${(ETAPAS.find(e => !estado.vistas[e.n]) || ETAPAS[0]).n}">${vistas ? 'Continuar as etapas' : 'Começar pela etapa 1'}</a><a class="botao" href="#/prova/2026-1">Ir para as provas</a></div>
+        <p class="progresso-geral"><b>${vistas}</b> de ${ETAPAS.length} etapas vistas, <b>${tot.f}</b> de ${tot.t} itens de prova feitos.</p>
+      </div>
+      ${bancadaHTML()}
+    </section>
+
+    <section class="secao" aria-labelledby="t-cai">
+      <h2 id="t-cai">O que cai na P3</h2>
+      <p>As cinco provas de 2024.1 a 2026.1 têm sempre os mesmos três tipos de questão.</p>
+      <div class="tipos">
+        <div class="tipo"><span class="freq">5 de 5 provas</span><h3>Chave e três fotos</h3><p>Valores em 0⁻, 0⁺ e ∞ num circuito RC ou RL: correntes em resistores, i<sub>C</sub>, v<sub>L</sub>.</p><div class="chips"><a href="#/etapa/2">Etapa 2</a><a href="#/etapa/3">Etapa 3</a><a href="#/etapa/6">Etapa 6</a></div></div>
+        <div class="tipo"><span class="freq">5 de 5 provas</span><h3>Carga e descarga</h3><p>Constante de tempo, expressão x(t) e o esboço do gráfico.</p><div class="chips"><a href="#/etapa/4">Etapa 4</a><a href="#/etapa/5">Etapa 5</a></div></div>
+        <div class="tipo"><span class="freq">5 de 5 provas</span><h3>2ª ordem</h3><p>i(0⁺), di/dt(0⁺), tipo de amortecimento e solução geral, a partir do circuito ou da equação.</p><div class="chips"><a href="#/etapa/7">Etapa 7</a><a href="#/etapa/8">Etapa 8</a></div></div>
+      </div>
+    </section>
+
+    <section class="secao" aria-labelledby="t-etapas">
+      <h2 id="t-etapas">Etapas</h2>
+      <p>Em ordem: cada uma usa o que veio antes.</p>
+      <div class="lista">${ETAPAS.map(e => `<a class="item-lista" href="#/etapa/${e.n}"><span class="num">${e.n}</span><div><h3>${esc(e.titulo)}</h3><p>${esc(e.sobre)}</p></div><span class="estado ${estado.vistas[e.n] ? 'ok' : ''}">${estado.vistas[e.n] ? 'vista ✓' : ''}</span></a>`).join('')}</div>
+    </section>
+
+    <section class="secao" aria-labelledby="t-provas">
+      <h2 id="t-provas">Provas resolvidas</h2>
+      <p>Tente cada item antes de abrir a resolução. Os campos aceitam vírgula, frações (4/3) e prefixos (2m para 0,002).</p>
+      <div class="lista">${PROVAS.map(p => { const r = progressoProva(p); return `<a class="item-lista" href="#/prova/${p.id}"><span class="num">${p.nome.slice(3)}</span><div><h3>${p.nome}</h3><p>${p.data}, ${p.questoes.length} questões</p></div><span class="estado ${r.feitos === r.total ? 'ok' : ''}">${r.feitos} de ${r.total} itens</span></a>`; }).join('')}</div>
+    </section>
+
+    <section class="secao atalhos">
+      <div class="atalho"><h3>Simulado</h3><p>Questões novas, com os mesmos circuitos da prova e valores sorteados. Treine até ficar automático.</p><a class="botao prim" href="#/simulado">Abrir o simulado</a></div>
+      <div class="atalho"><h3>Folha de fórmulas</h3><p>Tudo numa página só, para revisar na véspera.</p><a class="botao" href="#/formulas">Ver as fórmulas</a></div>
+    </section>
+  </main>`;
+  bancadaIniciar();
+}
+function telaEtapa(n) {
+  const e = ETAPAS.find(x => x.n === String(n));
+  if (!e) return telaInicio();
+  estado.vistas[e.n] = true; save();
+  const i = ETAPAS.indexOf(e);
+  const ant = ETAPAS[i - 1], prox = ETAPAS[i + 1];
+  $('#app').innerHTML = topo('etapa') + `<main class="pagina"><article class="coluna">
+    <header class="cab-etapa"><span class="num">Etapa ${e.n} de ${ETAPAS.length}</span><h1>${esc(e.titulo)}</h1></header>
+    <div class="texto">${md(e.texto)}</div>
+    ${e.treino.length ? `<section class="treino"><h2>Treino rápido</h2>${questaoHTML({ enunciado: 'Responda e confira. Se errar, abra a explicação.', itens: e.treino.map((t, k) => ({ l: String.fromCharCode(97 + k), txt: t.p, campos: [{ rot: '\\text{resposta}', un: t.u, valor: t.r }], passos: [{ txt: t.x }] })) }, `etapa${e.n}`, 'Treino').replace('<section class="questao"', '<section class="questao treino-q"')}</section>` : ''}
+    <nav class="nav-etapas">${ant ? `<a class="botao" href="#/etapa/${ant.n}">Etapa ${ant.n}</a>` : '<span></span>'}${prox ? `<a class="botao prim" href="#/etapa/${prox.n}">Etapa ${prox.n}: ${esc(prox.titulo.split(':')[0])}</a>` : '<a class="botao prim" href="#/prova/2026-1">Ir para as provas</a>'}</nav>
+  </article></main>`;
+  montarWidgets();
+  formulas($('#app'));
+  bancadaIniciar();
+}
+function montarWidgets() {
+  for (const w of $$('.widget')) {
+    const arg = w.dataset.arg;
+    if (w.dataset.w === 'bancada') w.innerHTML = bancadaHTML();
+    if (w.dataset.w === 'fotos') { const r = questaoProva(arg); w.innerHTML = explorador(CIRCUITOS[arg], r ? r.q.anot : []); }
+    if (w.dataset.w === 'curva') { w.innerHTML = curvaHTML(); curvaAtualizar(); }
+    if (w.dataset.w === 'rlc') { w.innerHTML = rlcHTML(); rlcAtualizar(); }
+    if (w.dataset.w === 'edo') { w.innerHTML = edoHTML(); edoResolver(); }
+  }
+}
+function telaProva(id, qn) {
+  const p = PROVAS.find(x => x.id === id) || PROVAS[0];
+  const r = progressoProva(p);
+  $('#app').innerHTML = topo('prova') + `<main class="pagina"><div class="coluna" style="max-width:900px">
+    <div class="sim-cab"><div><span class="num mono" style="color:var(--tinta-2);font-size:14px">${p.data}, TEE00190, Prof. Tiago Abud</span><h1 style="font-size:clamp(30px,4vw,42px)">${p.nome}</h1></div>
+    <div class="sim-tipos" role="group" aria-label="Escolher prova">${PROVAS.map(x => `<a class="botao${x.id === p.id ? ' prim' : ''}" href="#/prova/${x.id}">${x.nome.slice(3)}</a>`).join('')}</div></div>
+    <p class="placar" style="margin-top:10px">${r.feitos} de ${r.total} itens feitos. Use as abas de cada circuito para ver as três fotos.</p>
+    ${p.questoes.map(q => questaoHTML(q, `${p.id}:${q.n}`, `${q.n}ª questão`)).join('')}
+  </div></main>`;
+  p.questoes.forEach(q => { const s = document.getElementById(`q-${p.id}:${q.n}`); if (s) s._q = q; });
+  formulas($('#app'));
+  if (qn) setTimeout(() => document.getElementById(`q-${p.id}:${qn}`)?.scrollIntoView(), 30);
+}
+function telaSimulado() {
+  if (!SIM.q) novaSimulada();
+  const tipos = [['primeira', '1ª ordem (fotos, τ, expressão)'], ['segunda', '2ª ordem com circuito'], ['edo', '2ª ordem pela equação'], ['rlc', 'Tipo de amortecimento']];
+  $('#app').innerHTML = topo('simulado') + `<main class="pagina"><div class="coluna" style="max-width:900px">
+    <div class="sim-cab"><h1 style="font-size:clamp(30px,4vw,42px)">Simulado</h1><span class="placar" id="placar"></span></div>
+    <p style="color:var(--tinta-2);margin-top:8px">Os circuitos são os das provas, com valores sorteados. As respostas são calculadas na hora pelo simulador de circuitos desta página.</p>
+    <div class="sim-tipos" role="group" aria-label="Tipo de questão">${tipos.map(([id, n]) => `<button data-acao="sim-tipo" data-valor="${id}" aria-pressed="${SIM.tipo === id}">${n}</button>`).join('')}</div>
+    <div id="sim-q">${questaoHTML(SIM.q.q, `sim${SIM.n}`, SIM.q.titulo)}</div>
+    <div class="nav-etapas"><span></span><button class="prim" data-acao="sim-nova">Gerar outra questão</button></div>
+  </div></main>`;
+  const sec = $('#sim-q .questao'); if (sec) sec._q = SIM.q.q;
+  formulas($('#app'));
+  atualizarPlacar();
+}
+function telaFormulas() {
+  $('#app').innerHTML = topo('formulas') + `<main class="pagina"><article class="coluna"><header class="cab-etapa"><span class="num">Para a véspera</span><h1>Folha de fórmulas</h1></header><div class="texto">${md($('#formulas').value)}</div></article></main>`;
+  formulas($('#app'));
+}
+
+function render() {
+  const [, nome = '', a = '', b = ''] = location.hash.split('/');
+  ITENS.clear(); REG.clear();
+  if (nome === 'etapa') telaEtapa(a);
+  else if (nome === 'prova') telaProva(a, b);
+  else if (nome === 'simulado') telaSimulado();
+  else if (nome === 'formulas') telaFormulas();
+  else telaInicio();
+  if (!b) window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', render);
+
+/* ---------- ações: um ouvinte para todos os cliques ---------- */
+const A = {
+  tema() {
+    estado.tema = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    save();
+    document.documentElement.dataset.theme = estado.tema;
+    const b = $('.topo .tema');
+    b.textContent = estado.tema === 'dark' ? '☀' : '☾';
+  },
+  fase: mudarFase,
+  conferir, escolher, passo: proximoPasso,
+  'banc-modo'(v) { BANC.modo = v; BANC.pos = 'A'; BANC.x = 0; BANC.hist = []; $$('[data-acao=banc-modo]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.valor === v))); bancadaDesenhar(); },
+  'banc-chave'() { BANC.pos = BANC.pos === 'A' ? 'B' : 'A'; bancadaDesenhar(); },
+  'rlc-modo'(v) { $$('[data-acao=rlc-modo]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.valor === v))); rlcAtualizar(); },
+  'edo-resolver': edoResolver,
+  'edo-exemplo'(v) { const [a, b, K, x0, dx0] = v.split(','); $('#e-a').value = a; $('#e-b').value = b; $('#e-K').value = K; $('#e-x0').value = x0; $('#e-dx0').value = dx0; edoResolver(); },
+  'sim-tipo'(v) { SIM.tipo = v; novaSimulada(); telaSimulado(); },
+  'sim-nova'() { novaSimulada(); telaSimulado(); window.scrollTo(0, 0); },
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-acao]');
+  if (!b || b.disabled) return;
+  const fn = A[b.dataset.acao];
+  if (!fn) return;
+  try { fn(b.dataset.valor, b); } catch (err) { toast('Algo deu errado: ' + err.message); console.error(err); }
+});
+document.addEventListener('input', e => {
+  const w = e.target.dataset.input;
+  if (w === 'curva') curvaAtualizar();
+  if (w === 'rlc') rlcAtualizar();
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.matches('.campo input, .edo-entrada input')) return;
+  e.preventDefault();
+  if (e.target.closest('#lab-edo')) edoResolver();
+  else { const b = $('[data-acao=conferir]', e.target.closest('.item')); if (b) b.click(); }
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ev => { if (!estado.tema) document.documentElement.dataset.theme = ev.matches ? 'dark' : 'light'; });
+// O KaTeX carrega depois (defer): quando chegar, desenha as fórmulas da tela atual.
+window.addEventListener('load', () => formulas($('#app')));
+render();
+
+</script>
+</body>
+</html>

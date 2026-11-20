@@ -19,6 +19,17 @@ Uma plataforma para aprender a programar do zero, construindo uma versão mini d
 - **Raio-X do Meu Espaço**: trechos reais do código do app explicados, cada um ligado à lição que o ensina.
 - **Bloco livre**: um editor sem desafio, para testar ideias.
 
+## P3 de Circuitos CC (`circuitos/index.html`)
+
+Estudo visual para a P3 de TEE00190 (Circuitos Elétricos de Corrente Contínua, UFF): transitórios de 1ª e 2ª ordem.
+
+- **8 etapas** com laboratórios: circuito RC/RL ao vivo com osciloscópio, as "três fotografias" (0⁻, 0⁺, ∞) com a corrente andando pelos fios, constante de tempo, curva de 1ª ordem, laboratório RLC e um resolvedor passo a passo de equações de 2ª ordem.
+- **As provas de 2024.1 a 2026.1 resolvidas**: cada item tem campo de resposta com correção e resolução passo a passo, com o circuito redesenhado em cada instante.
+- **Simulado**: os mesmos circuitos das provas, com valores sorteados, corrigidos por um simulador de circuitos (análise nodal) que roda na própria página.
+- **Folha de fórmulas** para revisar na véspera.
+
+As respostas das provas foram conferidas duas vezes: à mão e pelo simulador.
+
 ## Para curiosos
 
 O próprio `index.html` usa as técnicas da trilha: variáveis CSS e tema escuro, `render()`, um ouvinte de clique com `data-acao` e o estado salvo no `localStorage`. As lições ficam em blocos `<textarea class="licao">` no meio do arquivo. Para criar uma lição nova, copie um desses blocos.
