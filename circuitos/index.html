@@ -165,8 +165,7 @@ input.errado { border-color: var(--erro); }
 .bancada .dica-chave { font-size: 14px; color: var(--tinta-2); padding: 0 16px 10px; }
 
 /* ---------- esquemas ---------- */
-.esquema { overflow-x: auto; }
-.esquema svg { width: 100%; height: auto; display: block; min-width: 520px; }
+.esquema svg { width: 100%; height: auto; display: block; }
 .bancada .esquema svg { min-width: 0; }
 .cc-esq svg { min-width: 0; max-width: 560px; margin: 0 auto; }
 .cc-txt { font-family: var(--sans); font-size: 16px; }
@@ -281,7 +280,15 @@ input.errado { border-color: var(--erro); }
 .resposta-final { margin: 6px 0 4px 38px; padding: 10px 14px; border-radius: 8px; background: var(--linha-2); font-weight: 600; }
 @media (max-width: 640px) {
   .campos, .escolhas, .item-acoes, .retorno, .passos, .resposta-final { margin-left: 0; }
-  .questao { padding: 16px; }
+  .questao { padding: 16px 14px; }
+  .explorador { margin-left: -14px; margin-right: -14px; border-radius: 0; border-left: 0; border-right: 0; }
+  .explorador .esquema { padding: 6px 2px 0; }
+  .passo { padding-left: 10px; }
+  .passo .esquema { margin-left: -10px; }
+  .esq-txt, .esq-i-txt, .esq-v-txt { font-size: 19px; }
+  .esq-sinal { font-size: 21px; }
+  .leitura { padding: 4px 14px 14px; }
+  .valores { font-size: 14px; gap: 4px 14px; }
 }
 
 /* widgets de laboratório */
@@ -1103,10 +1110,10 @@ const CIRCUITOS = {
       { t: 'W', p: [[0, 0], [2, 0]] },
       { id: 'S', t: 'SW', a: [2, 0], b: [2, 4], antes: 'fechada', depois: 'aberta' },
       { id: 'L', t: 'L', a: [5, 0], b: [2, 0], valor: 1.5, rot: '1,5 H' },
-      { t: 'W', p: [[5, 0], [7, 0]] },
+      { t: 'W', p: [[5, 0], [8, 0]] },
       { id: 'R10', t: 'R', a: [5, 0], b: [5, 4], valor: 10, rot: '10 Ω' },
-      { id: 'I6', t: 'I', a: [7, 4], b: [7, 0], valor: 6, rot: '6 A' },
-      { t: 'W', p: [[0, 4], [7, 4]] },
+      { id: 'I6', t: 'I', a: [8, 4], b: [8, 0], valor: 6, rot: '6 A' },
+      { t: 'W', p: [[0, 4], [8, 4]] },
     ],
   },
   // P3 2026.1, 2ª questão: RLC série depois que a chave abre
@@ -1204,12 +1211,12 @@ const CIRCUITOS = {
       { id: 'V10', t: 'V', a: [0, 4], b: [0, 0], valor: 10, rot: '10 V' },
       { id: 'R1', t: 'R', a: [0, 0], b: [2, 0], valor: 1, rot: '1 Ω' },
       { id: 'R4', t: 'R', a: [2, 0], b: [2, 4], valor: 4, rot: '4 Ω' },
-      { t: 'W', p: [[2, 0], [3, 0]] },
-      { id: 'S', t: 'SPDT', c: [3.5, 1], A: [3, 0], B: [4, 0], antes: 'A', depois: 'B' },
-      { id: 'C', t: 'C', a: [3.5, 1], b: [3.5, 4], valor: 1e-3, rot: '1 mF' },
-      { id: 'R2', t: 'R', a: [4, 0], b: [6, 0], valor: 2, rot: '2 Ω' },
-      { id: 'V6', t: 'V', a: [6, 4], b: [6, 0], valor: 6, rot: '6 V' },
-      { t: 'W', p: [[0, 4], [6, 4]] },
+      { t: 'W', p: [[2, 0], [4.5, 0]] },
+      { id: 'S', t: 'SPDT', c: [5, 1], A: [4.5, 0], B: [5.5, 0], antes: 'A', depois: 'B' },
+      { id: 'C', t: 'C', a: [5, 1], b: [5, 4], valor: 1e-3, rot: '1 mF' },
+      { id: 'R2', t: 'R', a: [5.5, 0], b: [8, 0], valor: 2, rot: '2 Ω' },
+      { id: 'V6', t: 'V', a: [8, 4], b: [8, 0], valor: 6, rot: '6 V' },
+      { t: 'W', p: [[0, 4], [8, 4]] },
     ],
   },
   // P3 2024.1, 2ª questão: carga do indutor (Thévenin)
@@ -2043,7 +2050,7 @@ function svgCircuito(circ, { fase = 'enunciado', res = null, anot = [], fluxo = 
   }
   const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const mx = 1.75, my = 0.95;
+  const mx = 1.75, my = 1.2;
   const W = (x1 - x0 + 2 * mx) * U, H = (y1 - y0 + 2 * my) * U;
   const X = x => (x - x0 + mx) * U, Y = y => (y - y0 + my) * U;
   const chaves = chavesFixas || FASE_CHAVE[fase] || 'antes';
@@ -3035,7 +3042,7 @@ function ccAtualizar(lab) {
 }
 function montarWidgets() {
   let nq = 0;
-  const etapa = location.hash.split('/')[2] || '0';
+  const etapa = ROTA.split('/')[2] || '0';
   for (const w of $$('.widget')) {
     const arg = w.dataset.arg;
     if (w.dataset.w === 'q') {
@@ -3082,8 +3089,17 @@ function telaFormulas() {
   formulas($('#app'));
 }
 
+/* A tela atual fica numa variável. Assim a navegação funciona até em
+   visualizadores que bloqueiam a troca de endereço (como a pré-visualização de arquivos do celular). */
+let ROTA = location.hash.slice(1) || '/';
+function ir(rota) {
+  ROTA = rota;
+  render();
+  try { if (location.hash.slice(1) !== rota) history.pushState(null, '', '#' + rota); } catch (e) { /* sem histórico aqui: tudo bem */ }
+}
+window.addEventListener('popstate', () => { ROTA = location.hash.slice(1) || '/'; render(); });
 function render() {
-  const [, nome = '', a = '', b = ''] = location.hash.split('/');
+  const [, nome = '', a = '', b = ''] = ('#' + ROTA).split('/');
   ITENS.clear(); REG.clear();
   if (nome === 'etapa') telaEtapa(a);
   else if (nome === 'prova') telaProva(a, b);
@@ -3092,7 +3108,7 @@ function render() {
   else telaInicio();
   if (!b) window.scrollTo(0, 0);
 }
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1) || '/'; if (h !== ROTA) { ROTA = h; render(); } });
 
 /* ---------- ações: um ouvinte para todos os cliques ---------- */
 const A = {
@@ -3114,6 +3130,8 @@ const A = {
   'sim-nova'() { novaSimulada(); telaSimulado(); window.scrollTo(0, 0); },
 };
 document.addEventListener('click', e => {
+  const link = e.target.closest('a[href^="#/"]');
+  if (link) { e.preventDefault(); ir(link.getAttribute('href').slice(1)); return; }
   const b = e.target.closest('[data-acao]');
   if (!b || b.disabled) return;
   const fn = A[b.dataset.acao];

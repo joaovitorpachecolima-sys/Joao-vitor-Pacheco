@@ -4817,10 +4817,19 @@ function escala(n, total) {
 /* ---------- 9. Telas ---------- */
 let telaAtual = null;   // guarda o que a tela aberta precisa (editor, iframe...)
 
+/* A tela atual fica numa variável. Assim a navegação funciona até em
+   visualizadores que bloqueiam a troca de endereço (como a pré-visualização de arquivos do celular). */
+let ROTA = location.hash.slice(1) || '/';
 function rotaAtual() {
-  const [, nome = '', arg = ''] = location.hash.split('/');
+  const [, nome = '', arg = ''] = ('#' + ROTA).split('/');
   return { nome, arg: decodeURIComponent(arg) };
 }
+function ir(rota) {
+  ROTA = rota;
+  render();
+  try { if (location.hash.slice(1) !== rota) history.pushState(null, '', '#' + rota); } catch (e) { /* sem histórico aqui: tudo bem */ }
+}
+window.addEventListener('popstate', () => { ROTA = location.hash.slice(1) || '/'; render(); });
 function topo(ativo) {
   const escuro = document.documentElement.dataset.theme === 'dark';
   const link = (href, id, curto, longo) => `<a href="${href}"${ativo === id ? ' aria-current="page"' : ''}>${curto}<span class="longo">${longo}</span></a>`;
@@ -4844,7 +4853,7 @@ function render() {
   else telaInicio();
   window.scrollTo(0, 0);
 }
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1) || '/'; if (h !== ROTA) { ROTA = h; render(); } });
 
 /* ----- Início ----- */
 const DEMO = `<h1>Meu Espaço</h1>
@@ -5311,6 +5320,8 @@ const A = {
 function fecharMais() { const d = $('details.mais'); if (d) d.open = false; }
 
 document.addEventListener('click', e => {
+  const link = e.target.closest('a[href^="#/"]');
+  if (link) { e.preventDefault(); ir(link.getAttribute('href').slice(1)); return; }
   const tecla = e.target.closest('[data-tecla]');
   if (tecla && telaAtual?.editor) { telaAtual.editor.inserir(tecla.dataset.tecla); return; }
   if (!e.target.closest('details.mais')) fecharMais();
