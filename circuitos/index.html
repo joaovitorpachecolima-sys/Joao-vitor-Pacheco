@@ -168,6 +168,12 @@ input.errado { border-color: var(--erro); }
 .esquema { overflow-x: auto; }
 .esquema svg { width: 100%; height: auto; display: block; min-width: 520px; }
 .bancada .esquema svg { min-width: 0; }
+.cc-esq svg { min-width: 0; max-width: 560px; margin: 0 auto; }
+.cc-txt { font-family: var(--sans); font-size: 16px; }
+.pergunta-inline { padding: 4px 18px 12px; margin: 18px 0 26px; border-left: 4px solid var(--f-inicial); }
+.pergunta-inline .item { border-top: 0; padding-top: 12px; }
+.pergunta-inline .item-p { grid-template-columns: 0 minmax(0, 1fr) auto; }
+.pergunta-inline .campos, .pergunta-inline .item-acoes, .pergunta-inline .retorno, .pergunta-inline .passos, .pergunta-inline .resposta-final { margin-left: 0; }
 .esq-fio { stroke: var(--tinta); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .esq-el { stroke: var(--tinta); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .esq-no { fill: var(--tinta); }
@@ -336,43 +342,135 @@ input[type=range] { width: 100%; accent-color: var(--tinta); min-height: 30px; }
 
 <textarea class="etapa">
 n: 1
-titulo: Revisão relâmpago: as ferramentas de corrente contínua
-sobre: Ohm, nós, malhas, série, paralelo e divisores. Toda questão da P3 vira um circuito destes em algum momento.
+titulo: O básico: tensão, corrente e resistência
+sobre: Do zero e devagar: o que é cada coisa, lei de Ohm, série, paralelo, nós e malhas. Com circuitos para mexer.
 === texto
-Em toda questão da P3 você vai "congelar" o circuito em alguns instantes, e cada foto congelada é um circuito só com **resistores e fontes**. Então antes de tudo você precisa destas ferramentas afiadas. Se elas estão firmes, pode passar rápido por aqui.
+Esta etapa começa do zero, em oito partes pequenas. Em cada uma: leia, mexa no circuito e responda a perguntinha antes de seguir. Se uma parte não fizer sentido, pare nela e me pergunte.
 
-### As cinco ferramentas
-1. **Lei de Ohm**: $v = R\,i$. A corrente entra pelo lado **+** do resistor.
-2. **Lei dos nós (LCK)**: tudo que entra num nó, sai. $\sum i_{\text{entram}} = \sum i_{\text{saem}}$.
-3. **Lei das malhas (LTK)**: dando uma volta completa numa malha, a soma das tensões é zero.
-4. **Série e paralelo**: em série, soma: $R_s = R_1 + R_2$. Em paralelo, "produto pela soma": $R_p = \dfrac{R_1 R_2}{R_1 + R_2}$. O paralelo é sempre **menor** que o menor dos dois.
-5. **Divisores**:
+### Parte 1: as três grandezas
+Pense num circuito como **água correndo em canos**.
 
-$$v_1 = V\,\frac{R_1}{R_1 + R_2} \qquad\qquad i_1 = I\,\frac{R_2}{R_1 + R_2}$$
+- A **fonte** (o símbolo com um traço comprido e um curto) é uma **bomba d'água**: é ela que empurra.
+- A **tensão** $v$, em **volts (V)**, é a força desse empurrão. Imagine duas caixas d'água em alturas diferentes: quanto maior a diferença de altura, mais forte a água desce. Por isso a tensão é sempre medida **entre dois pontos**.
+- A **corrente** $i$, em **ampères (A)**, é quanta água passa pelo cano a cada segundo.
+- A **resistência** $R$, em **ohms (Ω)**, é um trecho de cano estreito, que dificulta a passagem. No desenho, é o zigue-zague.
 
-> No divisor de **corrente**, em cima da fração vai a resistência do **outro** ramo. Faz sentido: a corrente prefere o caminho mais fácil, então quanto maior o **outro** resistor, mais corrente vem para o seu.
+Os fios são canos largos e perfeitos: não atrapalham nada. Por isso, **pontos ligados só por fio têm a mesma tensão**. Um grupo de pontos ligados por fio se chama **nó**.
 
-### Análise nodal com um nó só
-Várias questões da P3 têm um único nó desconhecido, ligado a fontes por resistores. A receita: chame a tensão do nó de $v$ e escreva "o que entra = o que sai", com cada corrente no formato $\frac{\text{tensão de um lado} - \text{tensão do outro}}{R}$.
+Mexa nos controles abaixo. Os pontinhos azuis são a corrente andando. Repare: mais tensão, mais corrente. Mais resistência, menos corrente.
 
-Exemplo da P3 2025.1 (nó P ligado aos 10 V por 1 Ω e aos 3 V por 2 Ω e 4 Ω):
+@w cc ohm
 
-$$\frac{10 - v}{1} = \frac{v - 3}{2} + \frac{v - 3}{4} \;\Rightarrow\; 40 - 4v = 3v - 9 \;\Rightarrow\; v = 7\ \text{V}$$
+### Parte 2: a lei de Ohm
+A regra que liga as três grandezas é a **lei de Ohm**:
 
-### Equivalente de Thévenin
-Na etapa 4 você vai precisar da **resistência equivalente** vista por dois terminais. Às vezes também ajuda o circuito equivalente inteiro: fonte $V_{th}$ em série com $R_{th}$.
+$$v = R \cdot i$$
 
-- $V_{th}$: a tensão nos terminais com eles abertos (muitas vezes um divisor de tensão).
-- $R_{th}$: zere as fontes (fonte de tensão vira fio, fonte de corrente vira circuito aberto) e calcule a resistência vista dos terminais.
+Ela serve de três jeitos, conforme o que você quer achar:
 
-Exemplo da P3 2024.1: 18 V com 6 Ω e 3 Ω, e depois mais 4 Ω até o indutor. $V_{th} = 18 \cdot \frac{3}{6 + 3} = 6$ V e $R_{th} = (6 \parallel 3) + 4 = 2 + 4 = 6\ \Omega$.
+| Quero achar | Conta |
+|---|---|
+| a corrente | $i = \dfrac{v}{R}$ |
+| a tensão | $v = R \cdot i$ |
+| a resistência | $R = \dfrac{v}{i}$ |
 
-> Corrente com sinal negativo não é erro: só quer dizer que ela anda no sentido **contrário** ao da seta que você (ou o professor) desenhou.
+Exemplo: fonte de 10 V ligada num resistor de 5 Ω. A corrente é $i = \frac{10}{5} = 2$ A.
+
+**Para onde a corrente anda:** ela sai pelo **+** da fonte, dá a volta no circuito e volta pelo **−**. Dentro do resistor, ela vai do lado de tensão **maior** para o de tensão **menor**, como água descendo uma ladeira. Por isso o + do resistor fica do lado por onde a corrente entra.
+
+@q Uma fonte de 12 V está ligada num resistor de 4 Ω. Qual é a corrente? | 3 | A | Lei de Ohm: $i = \frac{v}{R} = \frac{12}{4} = 3$ A.
+
+### Parte 3: resistores em série
+**Série** quer dizer **um atrás do outro**, num caminho só, sem nenhuma bifurcação no meio.
+
+- Como só existe um caminho, a **mesma corrente** passa por todos.
+- As resistências **se somam**: $R_{total} = R_1 + R_2$. (Dois canos estreitos seguidos atrapalham mais que um.)
+- A tensão da fonte é **repartida** entre eles. Cada um fica com $v = R \cdot i$, e somando os pedaços dá a tensão da fonte.
+
+Mexa e confira que as duas tensões sempre somam a da fonte. O resistor maior fica com o pedaço maior.
+
+@w cc serie
+
+Exemplo (é a 1ª questão da P3 2024.1): 10 V com 1 Ω e 4 Ω em série.
+1. Resistência total: $1 + 4 = 5\ \Omega$.
+2. Corrente: $i = \frac{10}{5} = 2$ A, a mesma nos dois.
+3. Tensão em cada um: no 1 Ω, $1 \cdot 2 = 2$ V. No 4 Ω, $4 \cdot 2 = 8$ V. E $2 + 8 = 10$ V, a tensão da fonte.
+
+@q Uma fonte de 10 V alimenta 4 Ω e 1 Ω em série. Qual é a tensão no resistor de 1 Ω? | 2 | V | Total: $4 + 1 = 5\ \Omega$. Corrente: $\frac{10}{5} = 2$ A. No 1 Ω: $1 \cdot 2 = 2$ V. (É a P3 2025.2, 2ª questão.)
+
+### Parte 4: resistores em paralelo
+**Paralelo** quer dizer **lado a lado**: os resistores ligam nos **mesmos dois nós**, como dois canos saindo do mesmo lugar e chegando no mesmo lugar.
+
+- Como estão nos mesmos dois nós, todos têm a **mesma tensão**.
+- A corrente se **divide** entre eles. O caminho mais fácil (o de **menor** resistência) leva **mais** corrente.
+- Cada um tem a sua corrente pela lei de Ohm, $i = \frac{v}{R}$. A corrente total é a soma.
+
+@w cc paralelo
+
+Exemplo (P3 2025.2, 1ª questão): fonte de 5 V com um resistor de 5 Ω e outro de 1 Ω em paralelo.
+1. Os dois ficam com os mesmos 5 V.
+2. No 5 Ω: $\frac{5}{5} = 1$ A. No 1 Ω: $\frac{5}{1} = 5$ A.
+3. A fonte entrega a soma: $1 + 5 = 6$ A.
+
+Se precisar trocar dois resistores em paralelo por um só, a conta é "produto pela soma": $R_p = \dfrac{R_1 \cdot R_2}{R_1 + R_2}$. O resultado é sempre **menor** que o menor dos dois, porque abrir mais um caminho só facilita.
+
+@q Quanto vale um resistor de 6 Ω em paralelo com um de 3 Ω? | 2 | Ω | Produto pela soma: $\frac{6 \cdot 3}{6 + 3} = \frac{18}{9} = 2\ \Omega$. Menor que 3, como esperado.
+
+### Parte 5: lei dos nós
+Num nó, a corrente não some nem aparece do nada: **tudo que entra, sai**. É como um cano em T: a água que chega se divide, mas o total é o mesmo.
+
+$$\text{soma do que entra} = \text{soma do que sai}$$
+
+Foi o que aconteceu no paralelo: a fonte manda 6 A para o nó, e eles saem divididos em 1 A e 5 A.
+
+@q Num nó chegam 8 A. Por um caminho saem 1 A. Quanto sai pelo outro caminho? | 7 | A | Tudo que entra sai: $8 = 1 + x$, então $x = 7$ A. (Aparece na P3 2024.2.)
+
+### Parte 6: lei das malhas
+Uma **malha** é um caminho fechado: você sai de um ponto, dá a volta e chega de novo nele. Como voltou ao mesmo lugar, a "altura" total não mudou. Então **o que a fonte sobe, os resistores descem**:
+
+$$\text{tensão da fonte} = \text{soma das tensões nos resistores da malha}$$
+
+Foi o que vimos na série: $10 = 2 + 8$.
+
+@q Uma fonte de 12 V tem dois resistores em série. Um deles está com 8 V. Quanto tem o outro? | 4 | V | A fonte sobe 12 V e os resistores descem o mesmo total: $12 = 8 + x$, então $x = 4$ V.
+
+### Parte 7: dois atalhos (divisores)
+Os divisores não trazem nada novo: só juntam as partes 3 e 4 numa conta só.
+
+**Divisor de tensão** (série): a tensão num resistor é a da fonte vezes a "fatia" dele na resistência total.
+
+$$v_1 = V \cdot \frac{R_1}{R_1 + R_2}$$
+
+**Divisor de corrente** (paralelo, dois ramos): a corrente num ramo é a total vezes a resistência do **outro** ramo, dividida pela soma.
+
+$$i_1 = I \cdot \frac{R_2}{R_1 + R_2}$$
+
+> Por que vai o **outro** em cima? Quanto maior a resistência do outro lado, mais difícil passar por lá, e mais corrente sobra para o seu ramo.
+
+Exemplo (P3 2026.1): 6 A se dividem entre um ramo de 10 Ω e um de 5 Ω. No ramo de 5 Ω: $6 \cdot \frac{10}{10 + 5} = 4$ A. No de 10 Ω: $6 \cdot \frac{5}{15} = 2$ A. Conferindo: $4 + 2 = 6$ A.
+
+@q Uma fonte de 18 V alimenta 6 Ω e 3 Ω em série. Qual é a tensão no resistor de 3 Ω? | 6 | V | Divisor de tensão: $18 \cdot \frac{3}{6 + 3} = 18 \cdot \frac{1}{3} = 6$ V. (Ou pelo caminho longo: corrente $\frac{18}{9} = 2$ A, e $3 \cdot 2 = 6$ V.)
+
+### Parte 8: um nó ligado a duas fontes
+Esta é a parte mais difícil da etapa. Só venha para ela depois que as outras estiverem tranquilas.
+
+Às vezes um nó liga em duas fontes diferentes, e aí não é série nem paralelo simples. A receita:
+1. Chame a tensão desconhecida do nó de $v$.
+2. Para cada resistor ligado no nó, a corrente é $\dfrac{\text{tensão de um lado} - \text{tensão do outro}}{R}$.
+3. Escreva "o que entra = o que sai" e resolva a equação.
+
+Exemplo (P3 2025.1): o nó P liga numa fonte de 10 V por um resistor de 1 Ω, e numa fonte de 3 V por um de 2 Ω e outro de 4 Ω.
+- Entra no nó, vindo dos 10 V: $\frac{10 - v}{1}$.
+- Sai para os 3 V pelo 2 Ω: $\frac{v - 3}{2}$. E pelo 4 Ω: $\frac{v - 3}{4}$.
+
+$$\frac{10 - v}{1} = \frac{v - 3}{2} + \frac{v - 3}{4}$$
+
+Multiplicando tudo por 4 para sumir com as frações: $40 - 4v = 2v - 6 + v - 3$. Juntando: $49 = 7v$, ou seja, $v = 7$ V.
+
+> Uma corrente com sinal negativo não é erro: só quer dizer que ela anda no sentido **contrário** ao da seta desenhada.
 === treino
-? Quanto vale $6\ \Omega \parallel 3\ \Omega$? | 2 | Ω | Produto pela soma: $\frac{6 \cdot 3}{6 + 3} = \frac{18}{9} = 2\ \Omega$.
-? Uma fonte de 18 V alimenta 6 Ω e 3 Ω em série. Qual é a tensão no resistor de 3 Ω? | 6 | V | Divisor de tensão: $18 \cdot \frac{3}{6 + 3} = 6$ V.
-? Uma fonte de 6 A alimenta dois ramos em paralelo: 10 Ω e 5 Ω. Qual é a corrente no ramo de 5 Ω? | 4 | A | Divisor de corrente: em cima vai o **outro** resistor. $6 \cdot \frac{10}{10 + 5} = 4$ A.
-? Um nó P liga numa fonte de 10 V por 1 Ω e numa fonte de 2 V pelo indutor em curto. Pelo 2 Ω (de P para a terra) desce quanto? E pelo indutor? Responda a corrente no indutor, de P para a fonte de 2 V. | 7 | A | P fica com 2 V (curto até a fonte). Chegam $\frac{10 - 2}{1} = 8$ A, descem $\frac{2}{2} = 1$ A pelo 2 Ω, e o resto vai pelo indutor: $8 - 1 = 7$ A. (P3 2024.2.)
+? Uma fonte de 20 V alimenta 2 Ω e 8 Ω em série. Qual é a corrente? | 2 | A | Total: $2 + 8 = 10\ \Omega$. Corrente: $\frac{20}{10} = 2$ A.
+? Uma fonte de 6 V alimenta 2 Ω e 3 Ω em paralelo. Qual é a corrente total da fonte? | 5 | A | Os dois ficam com 6 V: $\frac{6}{2} = 3$ A e $\frac{6}{3} = 2$ A. Total: $3 + 2 = 5$ A.
 </textarea>
 
 <textarea class="etapa">
@@ -1838,7 +1936,7 @@ const unTex = u => u ? '\\ ' + (UN_TEX[u] || `\\text{${u}}`) : '';
 function md(src) {
   const linhas = src.replace(/\r/g, '').split('\n');
   let out = '', i = 0;
-  const especial = /^(```|### |> |- |\d+\. |@w |@ver |\$\$|\||<)/;
+  const especial = /^(```|### |> |- |\d+\. |@w |@q |@ver |\$\$|\||<)/;
   while (i < linhas.length) {
     const l = linhas[i];
     if (!l.trim()) { i++; continue; }
@@ -1855,6 +1953,7 @@ function md(src) {
       continue;
     }
     if (l.startsWith('### ')) { out += `<h3>${inline(l.slice(4))}</h3>`; i++; continue; }
+    if (l.startsWith('@q ')) { out += `<div class="widget" data-w="q" data-arg="${esc(l.slice(3).trim())}"></div>`; i++; continue; }
     if (l.startsWith('@w ')) {
       const [nome, ...args] = l.slice(3).trim().split(/\s+/);
       out += `<div class="widget" data-w="${esc(nome)}" data-arg="${esc(args.join(' '))}"></div>`; i++; continue;
@@ -2018,7 +2117,8 @@ function svgCircuito(circ, { fase = 'enunciado', res = null, anot = [], fluxo = 
       corpo += lead(5, 5) + g(`<line class="esq-el" x1="-5" y1="-14" x2="-5" y2="14" stroke-width="2.8"/><line class="esq-el" x1="5" y1="-14" x2="5" y2="14" stroke-width="2.8"/>`);
     } else if (tipo === 'V') {
       corpo += lead(4, 4) + g(`<line class="esq-el" x1="-4" y1="-8" x2="-4" y2="8" stroke-width="5"/><line class="esq-el" x1="4" y1="-16" x2="4" y2="16"/>`);
-      const sx = cx + ux * 10 + Q[0] * 22, sy = cy + uy * 10 + Q[1] * 22;
+      const ladoMais = ans.some(a => a.t === 'i' && !a.lado) ? P : Q;
+      const sx = cx + ux * 12 + ladoMais[0] * 16, sy = cy + uy * 12 + ladoMais[1] * 16;
       rotulos += `<text x="${sx}" y="${sy + 5}" text-anchor="middle" class="esq-txt forte">+</text>`;
     } else if (tipo === 'I') {
       corpo += lead(15, 15) + g(`<circle class="esq-el" cx="0" cy="0" r="15"/><path class="esq-el" d="M -8 0 L 8 0 M 3 -5 L 8 0 L 3 5"/>`);
@@ -2881,9 +2981,68 @@ function telaEtapa(n) {
   formulas($('#app'));
   bancadaIniciar();
 }
+/* ---------- laboratórios de corrente contínua (etapa 1) ---------- */
+const CC = {
+  ohm: {
+    ctl: [['V', 'Tensão da fonte', 1, 20, 1, 10, 'V'], ['R', 'Resistência', 1, 20, 1, 5, 'Ω']],
+    circ: v => ({ terra: [0, 3], elementos: [
+      { id: 'F', t: 'V', a: [0, 3], b: [0, 0], valor: v.V, rot: `${fmt(v.V)} V` },
+      { t: 'W', p: [[0, 0], [4, 0]] },
+      { id: 'R', t: 'R', a: [4, 0], b: [4, 3], valor: v.R, rot: `${fmt(v.R)} Ω` },
+      { t: 'W', p: [[0, 3], [4, 3]] },
+    ] }),
+    anot: [{ t: 'i', el: 'R', txt: 'i' }, { t: 'v', el: 'R', txt: 'v' }],
+    leitura: (v, f) => `$i = \\dfrac{v}{R} = \\dfrac{${fmtTex(v.V)}}{${fmtTex(v.R)}} = ${fmtTex(f.el.R.i)}\\ \\text{A}$`,
+  },
+  serie: {
+    ctl: [['V', 'Tensão da fonte', 1, 20, 1, 10, 'V'], ['R1', 'R₁ (em cima)', 1, 10, 1, 1, 'Ω'], ['R2', 'R₂ (na direita)', 1, 10, 1, 4, 'Ω']],
+    circ: v => ({ terra: [0, 3], elementos: [
+      { id: 'F', t: 'V', a: [0, 3], b: [0, 0], valor: v.V, rot: `${fmt(v.V)} V` },
+      { id: 'R1', t: 'R', a: [0, 0], b: [4, 0], valor: v.R1, rot: `${fmt(v.R1)} Ω` },
+      { id: 'R2', t: 'R', a: [4, 0], b: [4, 3], valor: v.R2, rot: `${fmt(v.R2)} Ω` },
+      { t: 'W', p: [[0, 3], [4, 3]] },
+    ] }),
+    anot: [{ t: 'v', el: 'R1', txt: 'v_1' }, { t: 'i', el: 'R2', txt: 'i' }, { t: 'v', el: 'R2', txt: 'v_2' }],
+    leitura: (v, f) => `Resistência total: $${fmtTex(v.R1)} + ${fmtTex(v.R2)} = ${fmtTex(v.R1 + v.R2)}\\ \\Omega$<br>Corrente (a mesma nos dois): $i = \\dfrac{${fmtTex(v.V)}}{${fmtTex(v.R1 + v.R2)}} = ${fmtTex(f.el.R1.i)}\\ \\text{A}$<br>$v_1 = ${fmtTex(v.R1)} \\cdot ${fmtTex(f.el.R1.i)} = ${fmtTex(f.el.R1.v)}\\ \\text{V}$ e $v_2 = ${fmtTex(v.R2)} \\cdot ${fmtTex(f.el.R1.i)} = ${fmtTex(f.el.R2.v)}\\ \\text{V}$<br>Soma: $${fmtTex(f.el.R1.v)} + ${fmtTex(f.el.R2.v)} = ${fmtTex(v.V)}\\ \\text{V}$, a tensão da fonte.`,
+  },
+  paralelo: {
+    ctl: [['V', 'Tensão da fonte', 1, 20, 1, 5, 'V'], ['R1', 'R₁ (no meio)', 1, 10, 1, 5, 'Ω'], ['R2', 'R₂ (na direita)', 1, 10, 1, 1, 'Ω']],
+    circ: v => ({ terra: [0, 3], elementos: [
+      { id: 'F', t: 'V', a: [0, 3], b: [0, 0], valor: v.V, rot: `${fmt(v.V)} V` },
+      { t: 'W', p: [[0, 0], [6, 0]] },
+      { id: 'R1', t: 'R', a: [3, 0], b: [3, 3], valor: v.R1, rot: `${fmt(v.R1)} Ω` },
+      { id: 'R2', t: 'R', a: [6, 0], b: [6, 3], valor: v.R2, rot: `${fmt(v.R2)} Ω` },
+      { t: 'W', p: [[0, 3], [6, 3]] },
+    ] }),
+    anot: [{ t: 'i', el: 'F', txt: 'i' }, { t: 'i', el: 'R1', txt: 'i_1' }, { t: 'i', el: 'R2', txt: 'i_2', lado: 'dir' }],
+    leitura: (v, f) => `Os dois estão nos mesmos nós, com $${fmtTex(v.V)}\\ \\text{V}$ cada.<br>$i_1 = \\dfrac{${fmtTex(v.V)}}{${fmtTex(v.R1)}} = ${fmtTex(f.el.R1.i)}\\ \\text{A}$ e $i_2 = \\dfrac{${fmtTex(v.V)}}{${fmtTex(v.R2)}} = ${fmtTex(f.el.R2.i)}\\ \\text{A}$<br>A fonte entrega a soma: $i = ${fmtTex(f.el.R1.i)} + ${fmtTex(f.el.R2.i)} = ${fmtTex(f.el.F.i)}\\ \\text{A}$<br>Equivalente: $\\dfrac{${fmtTex(v.R1)} \\cdot ${fmtTex(v.R2)}}{${fmtTex(v.R1)} + ${fmtTex(v.R2)}} = ${fmtTex(v.R1 * v.R2 / (v.R1 + v.R2))}\\ \\Omega$`,
+  },
+};
+function ccHTML(nome) {
+  const t = CC[nome];
+  return `<div class="lab" data-cc="${nome}"><div class="controles">${t.ctl.map(([id, rot, min, max, passo, val, un]) => `<label class="ctl"><span>${rot}<b data-v="${id}">${val} ${un}</b></span><input type="range" min="${min}" max="${max}" step="${passo}" value="${val}" data-k="${id}" data-input="cc"></label>`).join('')}</div><div class="esquema cc-esq"></div><div class="saida-lab cc-txt"></div></div>`;
+}
+function ccAtualizar(lab) {
+  const t = CC[lab.dataset.cc];
+  const v = {};
+  for (const inp of $$('input[data-k]', lab)) v[inp.dataset.k] = parseFloat(inp.value);
+  for (const [id, , , , , , un] of t.ctl) $(`[data-v="${id}"]`, lab).textContent = `${fmt(v[id])} ${un}`;
+  const circ = t.circ(v);
+  const foto = MOTOR.foto(circ, { modo: 'regime', chaves: 'antes' });
+  $('.cc-esq', lab).innerHTML = svgCircuito(circ, { fase: 'enunciado', fotoExtra: foto, anot: t.anot });
+  $('.cc-txt', lab).innerHTML = t.leitura(v, foto);
+  formulas($('.cc-txt', lab));
+}
 function montarWidgets() {
+  let nq = 0;
+  const etapa = location.hash.split('/')[2] || '0';
   for (const w of $$('.widget')) {
     const arg = w.dataset.arg;
+    if (w.dataset.w === 'q') {
+      const [p, r, u, x] = arg.split(' | ');
+      w.innerHTML = `<div class="questao pergunta-inline">${itemHTML({ l: '', txt: p, campos: [{ rot: '\\text{resposta}', un: u, valor: parseNum(r) }], passos: [{ txt: x }] }, {}, `etapa${etapa}-q${nq++}`)}</div>`;
+    }
+    if (w.dataset.w === 'cc') { w.innerHTML = ccHTML(arg); ccAtualizar($('.lab', w)); }
     if (w.dataset.w === 'bancada') w.innerHTML = bancadaHTML();
     if (w.dataset.w === 'fotos') { const r = questaoProva(arg); w.innerHTML = explorador(CIRCUITOS[arg], r ? r.q.anot : []); }
     if (w.dataset.w === 'curva') { w.innerHTML = curvaHTML(); curvaAtualizar(); }
@@ -2965,6 +3124,7 @@ document.addEventListener('input', e => {
   const w = e.target.dataset.input;
   if (w === 'curva') curvaAtualizar();
   if (w === 'rlc') rlcAtualizar();
+  if (w === 'cc') ccAtualizar(e.target.closest('.lab'));
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || !e.target.matches('.campo input, .edo-entrada input')) return;
