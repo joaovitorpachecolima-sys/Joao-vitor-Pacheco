@@ -1919,7 +1919,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 /* Número no formato brasileiro, com até 4 algarismos significativos. */
 function fmt(x, sig = 4) {
   if (x === null || x === undefined || Number.isNaN(x)) return '–';
-  if (Math.abs(x) < 1e-9) return '0';
+  if (Math.abs(x) < 1e-7) return '0';   // restos numéricos do simulador viram zero
   const a = Math.abs(x);
   let s;
   if (a >= 1e5 || a < 1e-3) {
