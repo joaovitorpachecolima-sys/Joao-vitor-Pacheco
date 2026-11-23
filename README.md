@@ -30,6 +30,15 @@ Estudo visual para a P3 de TEE00190 (Circuitos Elétricos de Corrente Contínua,
 
 As respostas das provas foram conferidas duas vezes: à mão e pelo simulador.
 
+### 2ª ordem sem susto (`circuitos/segunda-ordem.html`)
+
+Uma página só sobre circuitos de 2ª ordem (RLC), feita em cima das dúvidas dos treinos:
+
+- **Simulador no topo**: uma malha RLC em série ou em paralelo, com controle do resistor e do tempo. Mostra a corrente no osciloscópio, a corrente andando pelos fios e a energia passando do indutor para o capacitor e virando calor no resistor.
+- **Os 3 tipos de amortecimento**, o freio $\alpha$ contra o balanço $\omega_0$, por que a 2ª ordem precisa da derivada e a receita das três fotos (0⁻, 0⁺, t > 0).
+- **Duas questões de circuito RLC resolvidas**: P3 2025.1 (3ª, subamortecido) e P3 2026.1 (2ª, crítico), com o circuito em cada instante e a solução pelo Laplace.
+- **Pegadinhas, cola de bolso e um teste de 10 perguntas** com correção na hora.
+
 ## Para curiosos
 
 O próprio `index.html` usa as técnicas da trilha: variáveis CSS e tema escuro, `render()`, um ouvinte de clique com `data-acao` e o estado salvo no `localStorage`. As lições ficam em blocos `<textarea class="licao">` no meio do arquivo. Para criar uma lição nova, copie um desses blocos.
