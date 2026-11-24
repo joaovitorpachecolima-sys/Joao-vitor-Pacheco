@@ -39,6 +39,10 @@ Uma página só sobre circuitos de 2ª ordem (RLC), feita em cima das dúvidas d
 - **Duas questões de circuito RLC resolvidas**: P3 2025.1 (3ª, subamortecido) e P3 2026.1 (2ª, crítico), com o circuito em cada instante e a solução pelo Laplace.
 - **Pegadinhas, cola de bolso e um teste de 10 perguntas** com correção na hora.
 
+### Resumo da P3 (`circuitos/resumo-p3.html`)
+
+Para estudar no celular, sem fazer conta: o resumo de fórmulas e as **67 questões das provas de 2024.1 a 2026.1 separadas em 9 tópicos** (0⁻, 0⁺, ∞, τ, fórmula e gráfico, derivadas e os três de 2ª ordem). Cada tópico tem um resumo em uma frase, perguntas de teoria com resposta escondida e as questões com o circuito e o passo a passo, que abre com um toque.
+
 ## Para curiosos
 
 O próprio `index.html` usa as técnicas da trilha: variáveis CSS e tema escuro, `render()`, um ouvinte de clique com `data-acao` e o estado salvo no `localStorage`. As lições ficam em blocos `<textarea class="licao">` no meio do arquivo. Para criar uma lição nova, copie um desses blocos.
