@@ -1,0 +1,8 @@
+dados/
+__pycache__/
+*.pyc
+*.tmp
+configuracao.json
+# Planilhas recebidas pelo site podem ter dados reais: só o exemplo inventado vai junto.
+entrada/*
+!entrada/SISCO_dados_exemplo.xlsx

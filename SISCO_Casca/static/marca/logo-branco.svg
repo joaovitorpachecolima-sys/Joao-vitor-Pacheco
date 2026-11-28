@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 96" width="300" height="96" role="img" aria-label="Logo">
+  <!-- Logo provisório da casca (para fundo escuro): troque este arquivo pelo da sua empresa (mesmo nome). -->
+  <rect x="6" y="48" width="16" height="34" rx="3" fill="#ffffff"/>
+  <rect x="30" y="32" width="16" height="50" rx="3" fill="#ffffff"/>
+  <rect x="54" y="14" width="16" height="68" rx="3" fill="#00a0e3"/>
+  <text x="88" y="70" font-family="Segoe UI, Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="2" fill="#ffffff">EXEMPLO</text>
+</svg>

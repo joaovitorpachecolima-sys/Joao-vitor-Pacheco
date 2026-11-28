@@ -1,0 +1,19 @@
+# Render (render.com): cria o site da demonstração do SISCO a partir deste repositório.
+services:
+  - type: web
+    name: sisco-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./SISCO_Casca/Dockerfile
+    dockerContext: ./SISCO_Casca
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: SISCO_DEMO
+        value: "1"
+      - key: SISCO_DEMO_RESET_HORAS
+        value: "6"
+      # Domínios aceitos, separados por vírgula (ex.: sisco.seudominio.com.br,sisco-demo.onrender.com).
+      # Vazio = aceita qualquer um.
+      - key: SISCO_HOSTS
+        sync: false

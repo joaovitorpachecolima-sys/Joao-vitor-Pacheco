@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>SISCO · Controle de ocorrências</title>
+  <script src="/tema.js"></script>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Pular para o conteúdo</a>
+  <aside class="sidebar" aria-label="Navegação principal">
+    <a class="brand brand-marca" id="brand-logo" href="?view=gestao" aria-label="SISCO · Abrir Ocorrências"><img src="/marca/logo-branco.svg" alt="Logo"><strong>SISCO</strong></a>
+    <div class="workspace-label">PROCESSOS</div>
+    <nav>
+      <button class="nav-item active" data-view="board" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>Ocorrências</button>
+      <button class="nav-item" data-view="generation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>Geração</button>
+      <button class="nav-item" data-view="monthly"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Relatórios</button>
+      <button class="nav-item" data-view="kpis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>KPIs</button>
+      <button class="nav-item" data-view="plants"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10l6 3V8l6 3V4h4v17H3ZM7 17h1m4 0h1m4 0h1"/></svg>Usinas</button>
+    </nav>
+    <div class="workspace-label workspace-admin">ADMINISTRAÇÃO</div>
+    <nav>
+      <button class="nav-item" data-view="rules"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="9" width="6" height="6" rx="1.5"/><rect x="16" y="3" width="6" height="6" rx="1.5"/><rect x="16" y="15" width="6" height="6" rx="1.5"/><path d="M8 12h4m0-6v12m0-12h4m-4 12h4"/></svg>Regras do fluxo</button>
+      <button class="nav-item" data-view="import"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg>Sincronização</button>
+      <button class="nav-item nav-action" id="open-settings" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>Configurações</button>
+      <a class="nav-item" id="sidebar-powerbi" target="_blank" rel="noopener noreferrer" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>Power BI</a>
+    </nav>
+    <div class="sidebar-bottom"><span class="local-dot"></span>Ambiente de testes<small>Envios manuais somente para o e-mail de teste</small></div>
+  </aside>
+
+  <main id="main" tabindex="-1">
+    <header class="pipe-top">
+      <div class="shell-brand"><button type="button" id="shell-home" class="shell-home" aria-label="SISCO, ir para o início"><img src="/marca/simbolo.svg" alt=""><strong>SISCO</strong></button><span id="shell-crumb" class="shell-crumb"></span></div>
+      <div class="pipe-heading"><h1 id="page-title" tabindex="-1">Gestão de <em>Ocorrências</em></h1><p id="pipe-sub">Fases do controle operacional</p></div>
+      <div class="pipe-views" id="pipe-views" role="group" aria-label="Visualização do pipe">
+        <button type="button" data-pipe-mode="board" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>Fases</button>
+        <button type="button" data-pipe-mode="list" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Lista</button>
+        <button type="button" data-pipe-mode="calendar" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendário</button>
+      </div>
+      <nav id="env-tabs" class="env-tabs" aria-label="Opções deste ambiente"></nav>
+      <div class="pipe-actions"><button type="button" class="pipe-search" id="open-palette" aria-keyshortcuts="Control+K"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg>Buscar<kbd>Ctrl K</kbd></button><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Alternar tema claro e escuro"><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></button><div class="shell-menu"><button type="button" class="theme-toggle" id="shell-admin" aria-haspopup="true" aria-expanded="false" aria-label="Administração"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button><div id="shell-admin-menu" class="shell-admin-menu" hidden><button type="button" data-admin="rules">Flow Studio (regras)</button><button type="button" data-admin="import">Sincronização</button><button type="button" data-admin="settings">Configurações</button><button type="button" data-admin="powerbi">Power BI</button></div></div></div>
+    </header>
+    <header class="hero" id="occurrences-hero" hidden>
+      <div class="hero-title"><span id="hero-word-a">Acompanhamento</span> <span id="hero-word-b">Geral</span></div>
+      <div class="hero-slider" id="hero-slider">
+        <div class="hero-divider" id="bar-handle" role="separator" aria-orientation="vertical" aria-label="Divisão entre o painel esquerdo e a tabela; arraste ou use as setas" tabindex="0" title="Arraste para ajustar · duplo clique alterna"></div>
+        <div class="hero-number" id="hero-number"><strong id="hero-count">—</strong><span class="sr-only"> ocorrências registradas no controle</span></div>
+      </div>
+      <div class="hero-art" aria-hidden="true"></div>
+    </header>
+    <div class="page-content">
+      <div class="test-notice"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4v5c0 4-4 7-8 9-4-2-8-5-8-9V7l8-4Z"/><path d="m8 12 3 3 5-6"/></svg><span><strong>Ambiente de testes</strong><span class="notice-divider">·</span>Dados separados da planilha</span><span class="test-notice-right">Envios manuais somente para o e-mail de teste</span></div>
+      <div id="global-message" class="message" role="status" hidden></div>
+
+      <section id="start-view" hidden aria-labelledby="start-title"><div class="start" id="start-body"></div></section>
+
+      <section id="home-view" aria-labelledby="home-title">
+        <div class="page-heading"><div><p class="eyebrow">ANÁLISE GERAL · POWER BI</p><h2 id="home-title" class="sr-only" tabindex="-1">Acompanhamento geral</h2><p class="subtitle">Selecione Ocorrências Totais no painel para abrir a lista e agir no SISCO.</p></div><button id="home-occurrences" class="button primary" type="button">Ver ocorrências →</button></div>
+        <section id="analytics-panel" class="analytics-panel panel" aria-labelledby="analytics-title" hidden>
+          <div class="analytics-bar"><h2 id="analytics-title">Painel <span>Power BI</span></h2><div class="analytics-actions"><a id="analytics-open" class="analytics-link" target="_blank" rel="noopener noreferrer" hidden>Abrir no Power BI ↗</a><button id="analytics-edit" class="button secondary" type="button" hidden>Trocar link</button></div></div>
+          <div id="analytics-body" class="analytics-body">
+            <iframe id="analytics-frame" title="Painel Power BI de acompanhamento de ocorrências" allowfullscreen hidden></iframe>
+            <form id="analytics-form" class="analytics-form" hidden novalidate>
+              <p><strong>Conecte o painel do Power BI.</strong> No relatório em app.powerbi.com, use <b>Arquivo → Inserir relatório → Site ou portal</b> e cole o link abaixo. Só quem tiver acesso ao relatório verá os dados.</p>
+              <label>Link de inserção (ou o código &lt;iframe&gt; completo)<input id="analytics-url" type="text" maxlength="4000" placeholder="https://app.powerbi.com/reportEmbed?reportId=…" autocomplete="off"></label>
+              <div class="analytics-form-actions"><button type="button" id="analytics-cancel" class="button secondary" hidden>Cancelar</button><button type="submit" class="button primary">Salvar link</button></div>
+              <div id="analytics-message" class="message" role="status" hidden></div>
+            </form>
+          </div>
+        </section>
+      </section>
+
+      <section id="plants-view" hidden aria-labelledby="plants-title">
+        <div class="page-heading"><div><p class="eyebrow">ACOMPANHAMENTO POR USINA</p><h2 id="plants-title" class="sr-only" tabindex="-1">Usinas</h2><p class="subtitle">Escolha uma usina para consultar e revisar suas ocorrências.</p></div><button class="button primary sync-button" type="button"><span>Atualizar dados</span></button></div>
+        <div class="plants-toolbar"><label class="search-field"><span class="sr-only">Pesquisar usina</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input id="plant-search" type="search" placeholder="Pesquisar usina…" autocomplete="off"></label><span id="plants-count" class="muted" aria-live="polite">Carregando usinas…</span></div>
+        <p id="plants-sync" class="plants-sync muted" role="status">Aguardando a leitura da base local.</p>
+        <div id="plants-grid" class="plants-grid"></div>
+        <p id="plants-empty" class="panel plants-empty" hidden>Nenhuma usina encontrada. Ajuste sua pesquisa.</p>
+        <p class="plants-note">Agrupamento pelo campo Usina dos registros importados. Respostas sem vínculo confirmado continuam identificadas para conferência.</p>
+      </section>
+
+      <section id="occurrences-view" hidden aria-labelledby="page-title">
+       <div class="bi-split">
+        <div class="bi-left" aria-hidden="true"></div>
+        <div class="bi-divider" id="bar-lower" aria-hidden="true" title="Arraste para ajustar · duplo clique alterna"></div>
+        <div class="bi-right">
+        <button id="back-plants" class="button secondary back-plants" type="button" hidden>← Todas as usinas</button>
+        <div class="page-heading hero-toolbar"><div><p class="eyebrow" id="occurrences-eyebrow">ENTRADA E REVISÃO</p><p class="subtitle" id="occurrences-subtitle">Confira as informações e libere a revisão no novo controle.</p></div><button class="button primary sync-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg><span>Atualizar dados</span></button></div>
+        <div class="metrics" aria-label="Resumo das ocorrências">
+          <div class="metric"><span>Registros importados</span><strong id="count-total">—</strong><small>Inclui respostas sem vínculo</small></div>
+          <div class="metric metric-focus"><span>A revisar</span><strong id="count-pending">—</strong><small>Aguardando sua conferência</small></div>
+          <div class="metric"><span>Revisadas</span><strong id="count-reviewed">—</strong><small>Aprovadas neste ambiente</small></div>
+          <div class="metric"><span>Fonte alterada</span><strong id="count-changed">—</strong><small>Novos dados após a importação</small></div>
+        </div>
+        <div class="sync-line"><span class="sync-indicator" id="sync-indicator"></span><span id="sync-text">Conectando ao controle local…</span><span id="sync-auto">Leitura automática a cada minuto</span></div>
+        <div class="workbench">
+          <section class="list-panel panel" aria-labelledby="list-title">
+            <div class="panel-title"><h2 id="list-title">Sua lista de trabalho</h2><span class="count-pill" id="filtered-count">—</span><button id="latest-records" type="button" class="button secondary">Mais recentes ↓</button></div>
+            <div class="filter-tabs" role="group" aria-label="Filtrar por revisão">
+              <button class="filter-tab active" data-filter="all" aria-pressed="true">Todas</button>
+              <button class="filter-tab" data-filter="pending" aria-pressed="false">A revisar</button>
+              <button class="filter-tab" data-filter="action" aria-pressed="false">Com tratativas</button>
+              <button class="filter-tab" data-filter="reviewed" aria-pressed="false">Revisadas</button>
+              <button class="filter-tab" data-filter="changed" aria-pressed="false">Fonte alterada</button>
+            </div>
+            <div class="filters">
+              <label class="search-field"><span class="sr-only">Pesquisar por ID, usina, equipamento ou relato</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input type="search" id="search" placeholder="Buscar ID, usina, equipamento ou relato…" autocomplete="off"></label>
+              <div class="filter-row"><label><span class="sr-only">Situação informada na origem</span><select id="status-filter"><option value="">Todas as situações</option></select></label><label><span class="sr-only">Classificação</span><select id="classification-filter"><option value="">Todas as classificações</option></select></label></div>
+              <div class="filter-row"><label><span class="sr-only">Conclusão</span><select id="conclusion-filter"><option value="">Todas as conclusões</option></select></label><label><span class="sr-only">Usina</span><select id="plant-filter"><option value="">Todas as usinas</option></select></label></div>
+            </div>
+            <div class="table-wrap" id="occurrence-scroll" tabindex="0" role="region" aria-label="Histórico cronológico de ocorrências"><table><thead><tr><th scope="col">Início ↑</th><th scope="col">Ocorrência / usina</th><th scope="col">Classificação</th><th scope="col">Geração</th><th scope="col">Conclusão</th><th scope="col">Próxima ação</th></tr></thead><tbody id="items-body"></tbody></table><div class="list-empty" id="list-empty"><span class="empty-symbol" aria-hidden="true">↻</span><h3>Carregando suas ocorrências</h3><p>Aguarde a leitura da base local.</p></div></div>
+            <div class="list-footer"><span>↑ Suba para consultar o histórico · Mais recentes no fim</span><span>Ordem por data e hora de início</span></div>
+          </section>
+          <section id="detail-panel" class="detail-panel panel" aria-label="Detalhes da ocorrência">
+            <div class="detail-empty" id="detail-empty"><div class="empty-illustration" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="10" y="7" width="28" height="35" rx="4"/><path d="M17 16h14M17 23h14M17 30h8"/><circle cx="36" cy="35" r="9"/><path d="m32 35 3 3 5-6"/></svg></div><p class="eyebrow">PRONTO PARA CONFERIR</p><h2>Selecione uma ocorrência</h2><p>Escolha uma ocorrência na lista para consultar o relato e revisar as informações.</p><div class="empty-tip">Ocorrências marcadas como revisadas na planilha já entram revisadas; as demais são revisadas aqui.</div></div>
+            <div id="detail-content" hidden>
+              <div class="detail-header"><div><p class="eyebrow" id="detail-identity"></p><h2 id="detail-title"></h2><div id="detail-badges" class="badges"></div></div><button type="button" class="icon-button" id="close-detail" aria-label="Fechar detalhes">×</button></div>
+              <div class="record-navigation"><button id="previous-record" type="button" class="button secondary">↑ Anterior</button><span id="record-position"></span><button id="next-record" type="button" class="button secondary">Próxima ↓</button></div>
+              <div class="detail-scroll"><div class="detail-main">
+                <div id="editor-message" class="message" role="status" hidden></div>
+                <button id="reload-record" class="button secondary conflict-button" type="button" hidden>Recarregar este registro</button>
+                <div id="source-change-notice" class="source-change-notice" hidden>A fonte recebeu novas informações. Confira os dados de origem abaixo; suas edições foram preservadas.</div>
+                <div id="record-warnings" class="record-warnings" hidden></div>
+                <section class="record-section workflow-section"><p class="eyebrow">ETAPA ATUAL</p><h3 id="detail-conclusion"></h3><p id="conclusion-reference" class="muted"></p><div id="workflow-dates" class="workflow-dates"></div><p id="action-permission" class="action-permission"></p><div class="workflow-actions"><button id="create-word" class="button secondary" type="button">Criar Word</button><label class="button secondary upload-label">Anexar Word revisado<input type="file" id="upload-word" accept=".docx" hidden></label><button id="prepare-email" class="button primary" type="button">Preparar e-mail</button></div><p class="muted document-hint">O Word preenche identificação e cabeçalho. Complete o conteúdo no Word e anexe a versão revisada antes do envio.</p><div id="document-list" class="document-list"></div><div id="action-message" class="message" role="status" hidden></div></section>
+                <form id="edit-form">
+                  <div id="preparation-notes" class="preparation-note"></div>
+                  <section class="record-section"><div class="section-heading"><h3>Informações da ocorrência</h3><span id="dirty-state">Dados salvos</span></div>
+                    <div class="form-grid"><label>Usina<input name="plant" readonly></label><label>Coordenação<input name="coordination" readonly></label>
+                      <label>Classificação<select name="classification" id="edit-classification"><option value="">Não classificada</option><option>Manutenção</option><option>Distribuidora</option><option>Operacional</option><option>TI</option><option>Informativo</option></select></label>
+                      <label>Afeta a geração?<select name="generation_impact"><option value="">Não informado</option><option>Sim</option><option>Não</option></select></label>
+                      <label id="maintenance-type-field" hidden>Tipo de manutenção<select name="maintenance_type"><option value="">Não informado</option><option>Preventiva</option><option>Corretiva</option><option>Emergencial</option></select></label>
+                      <label>Equipamento afetado<input name="equipment" maxlength="300" placeholder="Identifique o equipamento"></label>
+                      <label class="full-width">Origem<input name="origin" maxlength="300" list="origin-options" placeholder="Informe a origem da ocorrência"><datalist id="origin-options"></datalist></label>
+                      <label class="full-width">Descrição<textarea name="description" rows="4" maxlength="20000" placeholder="Confira e ajuste a descrição"></textarea></label>
+                    </div>
+                    <div class="date-group"><h4>Início</h4><div class="form-grid"><label>Data de início<input name="start_date" type="date"></label><label>Hora de início<input name="start_time" type="time" step="60"></label></div></div>
+                    <div class="date-group"><h4>Encerramento <span>Preencha quando houver informação</span></h4><div class="form-grid"><label>Data de encerramento<input name="end_date" type="date"></label><label>Hora de encerramento<input name="end_time" type="time" step="60"></label></div></div>
+                    <div class="date-group"><h4>Retorno e acompanhamento</h4><div class="form-grid"><label>Status da manutenção<select name="maintenance_status"><option value="">Não informado</option><option>Em Aberto</option><option>Finalizada</option></select></label><label>Previsão de encerramento<input name="forecast_date" type="date"></label><label class="full-width">Data de retorno do registro<input name="document_return_date" type="date"></label></div></div>
+                  </section>
+                  <section class="review-section"><label class="review-control"><input type="checkbox" id="reviewed" name="reviewed"><span><strong>Revisado</strong><span>Conferi as informações disponíveis e concordo que estão corretas.</span></span></label><p>A revisão é a autorização para as tratativas. A ocorrência pode estar aberta ou ter informações de encerramento faltantes.</p><small id="review-date"></small><button type="button" class="button secondary reconfirm-button" id="reconfirm-button" hidden>Conferi a fonte · Confirmar revisão atual</button><div class="review-context" id="source-review"></div></section>
+                  <div class="editor-actions"><button type="button" class="button secondary" id="discard-button" disabled>Descartar alterações</button><button type="button" class="button secondary" id="save-next" disabled>Salvar e próxima</button><button type="submit" class="button primary" id="save-button" disabled>Salvar alterações</button></div>
+                </form>
+                <section class="record-section"><div class="section-heading"><h3>Retornos da manutenção</h3><button type="button" id="open-return" class="button secondary">Registrar retorno</button></div><p class="muted">Novas respostas importadas são aplicadas após a revisão. Informações recebidas por e-mail podem ser registradas aqui.</p><div id="maintenance-history" class="maintenance-history"></div></section>
+              </div><div class="detail-side">
+                <section class="record-section timeline-section"><div class="section-heading"><h3>Linha do tempo</h3><span>Datas de cada etapa</span></div><ol id="timeline" class="timeline"></ol>
+                  <div class="wait-box"><label for="wait-reason">Motivo da espera</label><select id="wait-reason"></select><input id="wait-note" type="text" maxlength="300" placeholder="Detalhe (opcional)" aria-label="Detalhe do motivo da espera"><button type="button" class="button secondary" id="wait-save">Salvar motivo</button><p id="wait-status" class="wait-status" role="status"></p></div></section>
+                <section class="record-section"><div class="section-heading"><h3>Relato original</h3><span>Somente leitura</span></div><div id="raw-report" class="raw-report"></div><details class="source-details"><summary>Consultar dados de origem</summary><dl id="raw-fields"></dl><p id="source-reference" class="source-reference"></p></details></section>
+                <section class="record-section history-section"><details open><summary>Histórico</summary><div id="action-history" class="action-history"></div></details></section>
+              </div>
+              </div>
+            </div>
+          </section>
+        </div>
+        </div>
+       </div>
+      </section>
+
+      <section id="board-view" hidden aria-labelledby="page-title">
+        <div class="bi-right board-area">
+          <div class="board-toolbar">
+            <label class="search-field board-search"><span class="sr-only">Pesquisar cards</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input id="board-search" type="search" placeholder="Buscar ID, usina ou equipamento…" autocomplete="off"></label>
+            <button type="button" class="board-chip" id="board-pending" aria-pressed="false">A revisar</button>
+            <button type="button" class="board-chip" id="board-overdue" aria-pressed="false">Atrasadas</button>
+            <details class="board-filter-menu">
+              <summary><span id="board-filter-label">Filtros</span></summary>
+              <div class="board-filter-fields">
+                <label class="saved-views"><span class="filter-label">Visões salvas</span><select id="saved-views"><option value="">Todas as ocorrências</option></select></label>
+                <label><span class="filter-label">Classificação</span><select id="board-classification"><option value="">Todas as classificações</option></select></label>
+                <label><span class="filter-label">Usina</span><select id="board-plant"><option value="">Todas as usinas</option></select></label>
+                <button type="button" class="board-link" id="save-view">Salvar visão</button>
+                <button type="button" class="board-link" id="delete-view" hidden>Excluir visão</button>
+              </div>
+            </details>
+            <label class="board-sort"><span>Ordenar</span><select id="board-sort"><option value="prioridade">Prioridade</option><option value="prazo">Prazo mais próximo</option><option value="parado">Mais tempo na fase</option><option value="recentes">Abertura mais recente</option><option value="antigas">Abertura mais antiga</option></select></label>
+            <span id="board-count" class="board-count" aria-live="polite"></span>
+            <button class="button primary sync-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg><span>Atualizar dados</span></button>
+          </div>
+          <div id="board" class="board" role="list" aria-label="Fases das ocorrências"></div>
+          <section id="calendar" class="calendar" hidden aria-label="Calendário das ocorrências">
+            <div class="cal-head">
+              <div class="cal-nav"><button type="button" class="cal-btn" id="cal-prev" aria-label="Mês anterior">‹</button><button type="button" class="cal-btn" id="cal-next" aria-label="Próximo mês">›</button><button type="button" class="cal-btn cal-today" id="cal-today">Hoje</button></div>
+              <h2 id="cal-title" aria-live="polite"></h2>
+              <div class="cal-basis" role="group" aria-label="Data usada no calendário"><button type="button" data-basis="due" aria-pressed="true">Próximas ações</button><button type="button" data-basis="start" aria-pressed="false">Início</button></div>
+            </div>
+            <div class="cal-weekdays" aria-hidden="true"><span>seg.</span><span>ter.</span><span>qua.</span><span>qui.</span><span>sex.</span><span>sáb.</span><span>dom.</span></div>
+            <div id="cal-grid" class="cal-grid"></div>
+            <div class="cal-foot"><div id="cal-legend" class="cal-legend"></div><span id="cal-undated" class="cal-undated"></span></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="generation-view" hidden aria-labelledby="page-title">
+        <div id="gen-strip" class="start-strip gen-strip"></div>
+        <div class="gen-filterbar">
+          <label class="search-field gen-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><span class="sr-only">Buscar usina ou grupo gerador</span><input id="gen-search" type="search" placeholder="Buscar usina ou UG…" autocomplete="off"></label>
+          <div id="gen-filters" class="env-tabs gen-filters" role="group" aria-label="Filtrar usinas"></div>
+        </div>
+        <div class="gen-toolbar">
+          <div class="gen-legend" aria-label="Legenda">
+            <span class="gen-key verde">Gerando</span><span class="gen-key azul">Parada e disponível</span><span class="gen-key vermelho">Parada com ocorrência</span><span class="gen-key amarelo">Parada sem ocorrência</span>
+          </div>
+          <span id="gen-info" class="gen-info" aria-live="polite"></span>
+          <button type="button" class="button primary" id="gen-refresh">Ler relatórios agora</button>
+        </div>
+        <div id="gen-alert" class="message warning" role="status" hidden></div>
+        <div class="gen-columns">
+          <div id="gen-list" class="gen-list"></div>
+          <aside id="gen-alerts" class="start-panel start-priorities gen-alerts" aria-label="Alertas da geração"></aside>
+        </div>
+      </section>
+
+      <section id="rules-view" hidden aria-labelledby="page-title">
+        <div class="rules-bar">
+          <div class="rules-mode" role="group" aria-label="Visualização das regras"><button type="button" data-rules-mode="map" aria-pressed="true">Mapa</button><button type="button" data-rules-mode="bpmn" aria-pressed="false">BPMN</button><button type="button" data-rules-mode="editor" aria-pressed="false">Editor do fluxo</button><button type="button" data-rules-mode="dmn" aria-pressed="false">Decisões (DMN)</button><button type="button" data-rules-mode="sim" aria-pressed="false">Simulador</button></div>
+          <div id="rules-status" class="rules-status" role="status"></div>
+          <label class="search-field rules-trace"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><span class="sr-only">Ver o caminho de uma ocorrência</span><input id="rules-trace" type="search" placeholder="Ver o caminho da ocorrência (ID)" autocomplete="off"></label>
+          <label><span class="sr-only">Histórico de versões</span><select id="rules-versions"><option value="">Histórico de versões</option></select></label>
+          <button type="button" class="button secondary" id="rules-validate">Validar</button>
+          <button type="button" class="button secondary" id="rules-discard" hidden>Descartar rascunho</button>
+          <button type="button" class="button primary" id="rules-publish" hidden>Publicar regras</button>
+        </div>
+        <div class="rules-layout">
+          <div class="rules-canvas" id="rules-canvas">
+            <div class="bpmn-tools" id="bpmn-tools" hidden>
+              <button type="button" class="cal-btn" id="bpmn-zoom-out" aria-label="Diminuir">−</button><span id="bpmn-zoom" class="bpmn-zoom">100%</span><button type="button" class="cal-btn" id="bpmn-zoom-in" aria-label="Aumentar">+</button><button type="button" class="cal-btn" id="bpmn-fit">Ajustar à tela</button>
+              <span class="bpmn-spacer"></span>
+              <button type="button" class="button secondary" id="bpmn-svg">Baixar imagem (SVG)</button><button type="button" class="button secondary" id="bpmn-xml">Baixar .bpmn (Bizagi)</button>
+            </div>
+            <div id="rules-map" class="rules-map" role="group" aria-label="Mapa do fluxo"></div>
+            <div id="bpmn-palette" class="bpmn-palette" role="group" aria-label="Elementos BPMN" hidden></div>
+            <div id="rules-bpmn" class="rules-bpmn" hidden></div>
+          </div>
+          <aside id="rules-panel" class="rules-panel" aria-live="polite"></aside>
+        </div>
+        <section id="flow-editor" class="flow-editor" hidden aria-label="Editor do fluxo">
+          <div class="rules-bar flow-bar">
+            <div id="flow-status" class="rules-status" role="status"></div>
+            <label class="search-field rules-trace"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><span class="sr-only">Ver o caminho de uma ocorrência</span><input id="flow-trace" type="search" placeholder="Ver o caminho da ocorrência (ID)" autocomplete="off"></label>
+            <label><span class="sr-only">Histórico do fluxo</span><select id="flow-versions"><option value="">Histórico do fluxo</option></select></label>
+            <button type="button" class="button secondary" id="flow-discard" hidden>Descartar rascunho</button>
+            <button type="button" class="button primary" id="flow-publish" hidden>Publicar fluxo</button>
+          </div>
+          <div class="rules-layout flow-layout">
+            <div class="rules-canvas paper flow-wrap">
+              <div class="bpmn-tools flow-tools" role="group" aria-label="Ferramentas do desenho">
+                <button type="button" class="cal-btn" id="flow-zoom-out" aria-label="Diminuir">−</button><span id="flow-zoom" class="bpmn-zoom">100%</span><button type="button" class="cal-btn" id="flow-zoom-in" aria-label="Aumentar">+</button><button type="button" class="cal-btn" id="flow-fit">Ajustar à tela</button>
+                <button type="button" class="cal-btn" id="flow-up" hidden>↑ Voltar ao processo</button>
+                <span class="bpmn-palette-hint">Use a paleta à esquerda para criar; clique num elemento para configurar. O ícone no canto de um subprocesso abre o que tem dentro.</span>
+                <span class="bpmn-spacer"></span>
+                <button type="button" class="cal-btn" id="flow-autolayout" title="Redesenha o rascunho com a organização automática do SISCO">Organizar</button>
+                <button type="button" class="button secondary" id="flow-download">Baixar .bpmn</button>
+              </div>
+              <div id="flow-bpmn" class="flow-bpmn" aria-label="Desenho BPMN do fluxo"><p class="flow-loading">Carregando o editor…</p></div>
+            </div>
+            <aside id="flow-panel" class="rules-panel" aria-live="polite"></aside>
+          </div>
+          <section id="flow-problems" class="rules-diff flow-problems" hidden></section>
+        </section>
+        <section id="rules-dmn" class="flow-editor" hidden aria-label="Tabelas de decisão (DMN)">
+          <div class="rules-layout flow-layout">
+            <div class="rules-canvas paper flow-wrap">
+              <div class="bpmn-tools flow-tools" role="group" aria-label="Tabelas de decisão">
+                <span id="dmn-views" class="dmn-views" role="group" aria-label="Escolher a tabela"></span>
+                <span class="bpmn-spacer"></span>
+                <button type="button" class="button secondary" id="dmn-download">Baixar .dmn</button>
+              </div>
+              <div id="dmn-editor" class="flow-bpmn dmn-editor" aria-label="Editor DMN"><p class="flow-loading">Carregando o editor…</p></div>
+            </div>
+            <aside id="dmn-panel" class="rules-panel" aria-live="polite"></aside>
+          </div>
+        </section>
+        <section id="rules-sim" class="rules-diff rules-sim" hidden></section>
+        <section id="rules-diff" class="rules-diff" hidden></section>
+        <div id="rules-summary" class="studio-summary"></div>
+      </section>
+
+      <section id="monthly-view" hidden aria-labelledby="page-title">
+        <div class="bi-right monthly-area">
+          <div class="monthly-toolbar">
+            <div class="monthly-nav"><button type="button" class="cal-btn" id="month-prev" aria-label="Mês anterior">‹</button><label><span class="sr-only">Mês do relatório</span><select id="month-select"></select></label><button type="button" class="cal-btn" id="month-next" aria-label="Próximo mês">›</button></div>
+            <h2 id="month-title" aria-live="polite"></h2>
+            <span id="month-partial" class="month-partial" hidden>Mês em andamento</span>
+            <button class="button primary sync-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg><span>Atualizar dados</span></button>
+          </div>
+          <div id="monthly-body" class="mgrid"></div>
+          <p id="monthly-note" class="monthly-note"></p>
+        </div>
+      </section>
+
+      <section id="kpis-view" hidden aria-labelledby="page-title">
+        <div class="bi-right monthly-area">
+          <div class="monthly-toolbar">
+            <div class="monthly-nav"><button type="button" class="cal-btn" id="kpi-prev" aria-label="Mês anterior">‹</button><label><span class="sr-only">Mês dos indicadores</span><select id="kpi-month"></select></label><button type="button" class="cal-btn" id="kpi-next" aria-label="Próximo mês">›</button></div>
+            <h2 id="kpi-title" aria-live="polite"></h2>
+            <span id="kpi-partial" class="month-partial" hidden>Mês em andamento</span>
+            <button class="button secondary" type="button" id="kpi-causes-open">Causas</button>
+            <button class="button secondary" type="button" id="kpi-targets-open">Definir metas</button>
+          </div>
+          <div id="kpi-body" class="kpi-page"></div>
+          <p id="kpi-note" class="monthly-note"></p>
+        </div>
+      </section>
+
+      <section id="import-view" hidden aria-labelledby="import-title">
+        <div class="page-heading"><div><p class="eyebrow">ACOMPANHAMENTO DA ENTRADA</p><h2 id="import-title" class="sr-only">Importações</h2><p class="subtitle">Acompanhe a leitura da planilha e os pontos que precisam de atenção.</p></div><button type="button" class="button primary sync-button"><span>Atualizar dados</span></button></div>
+        <div class="import-grid"><section class="panel import-card"><h2>Origem dos dados</h2><p class="muted">O SISCO lê a planilha de dados a cada minuto, só para leitura: nada é gravado nela. Salve a planilha antes de atualizar.</p><dl class="import-details"><dt>Planilha de dados</dt><dd id="import-path">—</dd><dt>Última alteração do arquivo</dt><dd id="import-saved-at">—</dd><dt>Última leitura concluída</dt><dd id="import-success">—</dd><dt>Última tentativa</dt><dd id="import-attempt">—</dd></dl><div class="fonte-acoes"><label class="button primary fonte-arquivo">Trocar planilha…<input type="file" id="fonte-arquivo" accept=".xlsx,.xlsm,.csv" hidden></label><a class="button secondary" href="/api/source/modelo" download>Baixar planilha modelo</a><a class="button secondary" href="/api/source/atual" download>Baixar planilha atual</a></div><fieldset class="fonte-modo"><legend>Ao trocar a planilha</legend><label><input type="radio" name="fonte-modo" value="atualizar" checked> Atualizar a base atual (mesmas ocorrências; revisões e histórico ficam)</label><label><input type="radio" name="fonte-modo" value="nova_base"> Começar uma base nova (a atual fica guardada em dados/arquivo)</label></fieldset><div id="fonte-mensagem" class="message" hidden></div></section><section class="panel import-card"><h2>Resultado da última leitura</h2><div id="import-summary" class="summary-list"><p class="muted">Aguardando a primeira leitura.</p></div><div id="import-error" class="message error" hidden></div><h3>Ambiente de testes</h3><p class="muted">Edições, revisões, documentos e histórico ficam no novo controle. Envios exigem revisão, prévia e comando manual.</p><dl class="import-details"><dt>Destino exclusivo dos testes</dt><dd id="test-email">—</dd></dl></section></div>
+        <section class="panel import-card issues-card"><div class="panel-title"><h2>Pontos de atenção na origem</h2><span class="count-pill" id="issue-count">0</span></div><p class="muted">Identificadores ambíguos e dados incompletos são sinalizados para conferência.</p><div id="import-issues"></div></section>
+        <section class="panel import-card issues-card"><div class="panel-title"><h2>Retornos da manutenção</h2><span class="count-pill" id="return-count">0</span></div><p class="muted">A primeira leitura forma o histórico. Somente respostas novas atualizam ocorrências revisadas; conflitos ficam disponíveis para conferência.</p><div id="return-summary" class="badges"></div><div id="return-issues" class="maintenance-history"></div></section>
+      </section>
+      <footer class="page-footer"><span>SISCO · Novo controle local</span><span>Operação atual preservada · Base de testes independente</span></footer>
+    </div>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <dialog id="card-dialog" class="card-dialog" aria-label="Card da ocorrência"><div id="card-phases" class="card-phases"></div><div id="card-move-hint" class="card-move-hint" role="status" hidden></div><div id="card-slot" class="card-slot"></div></dialog>
+  <dialog id="palette" class="palette" aria-label="Busca rápida"><div class="palette-box"><label class="palette-input"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><span class="sr-only">Buscar ocorrência ou comando</span><input id="palette-input" type="search" placeholder="Buscar por ID, usina, equipamento… ou um comando" autocomplete="off" role="combobox" aria-controls="palette-list" aria-expanded="true"></label><ul id="palette-list" class="palette-list" role="listbox"></ul><p class="palette-hint"><kbd>↑</kbd><kbd>↓</kbd> navegar · <kbd>Enter</kbd> abrir · <kbd>Esc</kbd> fechar · <kbd>/</kbd> ou <kbd>Ctrl K</kbd> de qualquer tela</p></div></dialog>
+  <dialog id="kpi-dialog" class="day-dialog kpi-dialog" aria-labelledby="kpi-dialog-title"><div class="dialog-heading"><h2 id="kpi-dialog-title">Metas dos indicadores</h2><button type="button" class="icon-button" id="kpi-dialog-close" aria-label="Fechar metas">×</button></div>
+    <form id="kpi-form" class="kpi-form"><div id="kpi-form-rows"></div><p id="kpi-form-error" class="kpi-form-error" role="alert" hidden></p>
+      <div class="kpi-form-actions"><button type="button" class="button secondary" id="kpi-form-defaults">Voltar ao padrão</button><button type="submit" class="button primary">Salvar metas</button></div></form></dialog>
+  <dialog id="cause-dialog" class="day-dialog kpi-dialog cause-dialog" aria-labelledby="cause-dialog-title"><div class="dialog-heading"><h2 id="cause-dialog-title">Famílias de causa</h2><button type="button" class="icon-button" id="cause-dialog-close" aria-label="Fechar causas">×</button></div>
+    <form id="cause-form" class="kpi-form"><p class="mcard-sub">A Origem da planilha é texto livre. Aqui cada texto entra numa família pela palavra-chave. Vale a primeira família da lista que casar. A planilha não é alterada.</p>
+      <div id="cause-rows"></div><button type="button" class="button secondary" id="cause-add">Nova família</button>
+      <div id="cause-unmatched" class="cause-unmatched"></div><p id="cause-error" class="kpi-form-error" role="alert" hidden></p>
+      <div class="kpi-form-actions"><button type="submit" class="button primary">Salvar famílias</button></div></form></dialog>
+  <dialog id="action-dialog" class="day-dialog kpi-dialog" aria-labelledby="action-dialog-title"><div class="dialog-heading"><h2 id="action-dialog-title">Nova ação de melhoria</h2><button type="button" class="icon-button" id="action-dialog-close" aria-label="Fechar ação">×</button></div>
+    <form id="action-form" class="kpi-form"><label class="rfield"><span>Ação</span><input name="title" type="text" maxlength="200" required></label>
+      <label class="rfield"><span>O que será feito</span><textarea name="todo" rows="3" maxlength="400" required></textarea></label>
+      <div class="action-form-pair"><label class="rfield"><span>Responsável</span><input name="owner" type="text" maxlength="80" required></label><label class="rfield"><span>Prazo</span><input name="due" type="date" required></label></div>
+      <p id="action-measure" class="mcard-sub"></p><p id="action-error" class="kpi-form-error" role="alert" hidden></p>
+      <div class="kpi-form-actions"><button type="submit" class="button primary">Criar ação</button></div></form></dialog>
+  <dialog id="day-dialog" class="day-dialog" aria-labelledby="day-title"><div class="dialog-heading"><h2 id="day-title"></h2><button type="button" class="icon-button" id="close-day" aria-label="Fechar dia">×</button></div><div id="day-list" class="day-list"></div></dialog>
+  <dialog id="email-dialog" aria-labelledby="email-title"><form method="dialog" class="dialog-heading"><h2 id="email-title">Preparar e-mail de teste</h2><button class="icon-button" aria-label="Fechar prévia">×</button></form><div class="dialog-body"><label class="email-kind-label">Tipo de mensagem<select id="email-kind"><option value="request">Solicitar atualização</option><option value="reminder">Cobrar atualização</option><option value="document">Enviar registro Word</option><option value="document_reminder">Cobrar retorno do registro</option></select></label><button type="button" class="button secondary" id="refresh-preview">Atualizar prévia</button><div id="email-message" class="message" role="status" hidden></div><div id="email-preview" hidden><dl class="email-envelope"><dt>Para</dt><dd id="email-to"></dd><dt>CC / CCO</dt><dd>Nenhum</dd><dt>Assunto</dt><dd id="email-subject"></dd><dt>Anexo</dt><dd id="email-attachment"></dd></dl><pre id="email-body"></pre><details><summary>Roteamento original (não será utilizado no envio de teste)</summary><pre id="email-routing"></pre></details></div></div><div class="dialog-footer"><span>Envio manual pelo Outlook deste computador.</span><button id="send-test" type="button" class="button primary" disabled>Enviar teste</button></div></dialog>
+  <dialog id="return-dialog" aria-labelledby="return-title"><form id="return-form"><div class="dialog-heading"><h2 id="return-title">Registrar retorno da manutenção</h2><button type="button" id="close-return" class="icon-button" aria-label="Fechar retorno">×</button></div><div class="dialog-body"><p id="return-identity" class="muted"></p><p>Registre as informações recebidas. Campos de encerramento ausentes continuam pendentes; uma ocorrência encerrada não será reaberta.</p><div class="form-grid"><label class="full-width">Situação informada<select name="maintenance_status" required><option>Em Aberto</option><option>Finalizada</option></select></label><label id="return-forecast-label" class="full-width">Previsão de encerramento<input name="forecast_date" type="date"></label><label class="return-end">Data de encerramento<input name="end_date" type="date"></label><label class="return-end">Hora de encerramento<input name="end_time" type="time"></label></div><div id="return-message" class="message" role="status" hidden></div></div><div class="dialog-footer"><span>Salvo somente neste controle local.</span><button type="submit" id="save-return" class="button primary">Registrar retorno</button></div></form></dialog>
+      <dialog id="settings-dialog" aria-labelledby="settings-title"><div class="settings-dialog-content"><button id="close-settings" class="icon-button" type="button" aria-label="Fechar configurações">×</button><div class="page-heading"><div><p class="eyebrow">REGRAS E DESTINATÁRIOS</p><h1 id="settings-title" tabindex="-1">Configurações</h1><p class="subtitle">Configuração do novo controle, iniciada com os valores da aba CONFiG.</p></div></div><form id="settings-form"><p class="message">Tipos de fluxo, classificações, prazos e metas agora ficam em <strong>Regras do fluxo</strong> (menu Administração), com rascunho, teste e publicação. Aqui ficam os e-mails e a assinatura.</p><section class="panel settings-card" hidden><h2>Tipos de fluxo</h2><p class="muted">Cada tipo define as etapas e para quem vão os e-mails. Alterar um tipo muda todas as classificações que o usam.</p><div class="settings-table"><table><thead><tr><th>Tipo de fluxo</th><th>Acompanhamento de status</th><th>Registro Word (coordenador)</th><th>Para quem vai o e-mail</th><th><span class="sr-only">Remover</span></th></tr></thead><tbody id="settings-flow-types"></tbody></table></div><button type="button" id="add-flow-type" class="button secondary">Adicionar tipo de fluxo</button></section>
+<section class="panel settings-card" hidden><h2>Fluxo por classificação</h2><p class="muted">Escolha o tipo de fluxo de cada classificação. O comportamento vem do tipo escolhido.</p><div class="settings-table"><table><thead><tr><th>Classificação</th><th>Tipo de fluxo</th><th>Resultado</th><th><span class="sr-only">Remover</span></th></tr></thead><tbody id="settings-flows"></tbody></table></div><button type="button" id="add-flow" class="button secondary">Adicionar classificação</button></section><section class="panel settings-card"><h2>Destinatários por coordenação</h2><p class="muted">Roteamento de referência. Durante os testes, Para é sempre o e-mail de teste (configuracao.json) e CC/CCO ficam vazios.</p><div id="settings-routes"></div></section><section class="panel settings-card"><h2>E-mails por classificação</h2><p class="muted"><b>Para</b> é usado quando o tipo de fluxo envia para a classificação (ex.: TI); nesse caso a coordenação não entra e vão o Para, o CC e o CCO da classificação. Quando o e-mail vai para a coordenação, <b>CC</b> e <b>CCO</b> daqui acompanham as solicitações de status.</p><div id="settings-class-routes"></div></section><section class="panel settings-card"><h2>Mensagem</h2><div class="form-grid"><label hidden>Prazo do registro (dias)<input type="number" id="settings-document-days" min="1" max="365" required></label><label hidden>Intervalo de cobrança (dias)<input type="number" id="settings-reminder-days" min="1" max="365" required></label><label class="full-width">Assinatura das mensagens<textarea id="settings-signature" rows="3" maxlength="1000"></textarea></label></div><p class="muted">No envio inicial, a primeira cobrança documental fica para o dia seguinte ao prazo. O reenvio conserva o prazo original. Alterações valem para ações futuras.</p></section><div id="settings-message" class="message" role="status" hidden></div><div class="settings-actions"><button type="button" id="settings-reload" class="button secondary">Descartar alterações</button><button type="submit" class="button primary">Salvar configurações</button></div></form></div></dialog>
+</body>
+</html>
